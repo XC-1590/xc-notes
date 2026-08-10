@@ -1,1 +1,392 @@
-<!DOCTYPE html><br/><html lang="zh-CN"><br/><head><br/><meta charset="UTF-8"><br/><meta name="viewport" content="width=device-width, initial-scale=1.0"><br/><title>xc-notes</title><br/><style><br/>:root{--bg:#0d0d0d;--card:#141414;--text:#b0b0b0;--accent:#7aa2f7;--line:#222;--danger:#f7768e}<br/>*{margin:0;padding:0;box-sizing:border-box}<br/>body{background:var(--bg);color:var(--text);font-family:"SF Mono","Fira Code","JetBrains Mono",monospace;max-width:680px;margin:0 auto;padding:2rem 1.5rem;line-height:1.7}<br/>h1{color:var(--accent);font-size:1.1rem;margin-bottom:2rem;font-weight:400;letter-spacing:0.05em}<br/>h2{color:var(--accent);font-size:0.85rem;margin:2rem 0 0.6rem;padding-bottom:0.35rem;border-bottom:1px solid var(--line);font-weight:400;cursor:pointer;user-select:none;letter-spacing:0.04em;transition:opacity .15s}<br/>h2:hover{opacity:.7}<br/>.entry{padding:.45rem 0;border-bottom:1px dotted #1e1e1e;font-size:.82rem;display:flex;justify-content:space-between;align-items:flex-start}<br/>.entry .time{color:#555;margin-right:.7rem;white-space:nowrap;font-size:.78rem}<br/>.entry .del{color:var(--danger);cursor:pointer;font-size:.7rem;opacity:0;transition:opacity .15s}<br/>.entry:hover .del{opacity:1}<br/>.todo{display:flex;align-items:flex-start;gap:.45rem;padding:.3rem 0;font-size:.82rem}<br/>.todo input[type=checkbox]{accent-color:var(--accent);margin-top:.2rem;cursor:pointer}<br/>.todo.done span{text-decoration:line-through;color:#444}<br/>.todo .del{color:var(--danger);cursor:pointer;font-size:.7rem;opacity:0;margin-left:auto;transition:opacity .15s}<br/>.todo:hover .del{opacity:1}<br/>.locked{text-align:center;padding:5rem 1rem;color:#2a2a2a;font-size:.85rem}<br/>.input-row{display:flex;gap:.4rem;margin:.5rem 0;flex-wrap:wrap}<br/>.input-row input,.input-row textarea{flex:1;min-width:100px;background:var(--card);border:1px solid var(--line);color:var(--text);padding:.4rem .55rem;font-family:inherit;font-size:.82rem;border-radius:3px;transition:border-color .15s}<br/>.input-row input:focus,.input-row textarea:focus{outline:none;border-color:var(--accent)}<br/>.input-row button{background:var(--accent);border:none;color:#0d0d0d;padding:.4rem .85rem;font-family:inherit;font-size:.78rem;border-radius:3px;cursor:pointer;font-weight:600;transition:opacity .15s}<br/>.input-row button:hover{opacity:.8}<br/>.hide{display:none}<br/>.status{font-size:.68rem;margin-left:.4rem}<br/>.status.ok{color:#9ece6a}<br/>.status.err{color:var(--danger)}<br/>#key-setup{background:var(--card);border:1px solid var(--line);padding:1rem;border-radius:4px;margin-bottom:1.5rem}<br/>#key-setup p{font-size:.78rem;color:#777;margin-bottom:.5rem}<br/>#key-setup input{width:100%;background:#0d0d0d;border:1px solid var(--line);color:var(--text);padding:.4rem .6rem;font-family:inherit;font-size:.8rem;border-radius:3px;margin-bottom:.5rem}<br/>#key-setup button{background:var(--accent);border:none;color:#0d0d0d;padding:.4rem 1rem;font-family:inherit;font-size:.78rem;border-radius:3px;cursor:pointer;font-weight:600}<br/></style><br/></head>
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>xc-notes</title>
+<style>
+:root{
+  --bg:#08080c;
+  --card:#111116;
+  --card2:#16161c;
+  --text:#b8b8c0;
+  --dim:#5a5a66;
+  --accent:#8aadf4;
+  --accent2:#7a9de0;
+  --line:#1e1e28;
+  --danger:#f07178;
+  --green:#9ccf8a;
+  --radius:5px;
+  --font:"Inter","SF Pro Text","PingFang SC","Microsoft YaHei",sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--font);
+  max-width:600px;
+  margin:0 auto;
+  padding:2.2rem 1.2rem 4rem;
+  line-height:1.65;
+  -webkit-font-smoothing:antialiased;
+}
+h1{
+  color:var(--accent);
+  font-size:1rem;
+  font-weight:500;
+  letter-spacing:.06em;
+  margin-bottom:2rem;
+  opacity:.85;
+}
+h2{
+  color:var(--dim);
+  font-size:.75rem;
+  font-weight:500;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  margin:2rem 0 .5rem;
+  padding-bottom:.35rem;
+  border-bottom:1px solid var(--line);
+  cursor:pointer;
+  user-select:none;
+  display:flex;
+  align-items:center;
+  gap:.35rem;
+  transition:color .2s;
+}
+h2:hover{color:var(--accent)}
+h2::after{
+  content:'▾';
+  font-size:.6rem;
+  transition:transform .25s;
+  opacity:.5;
+}
+h2.open::after{transform:rotate(-180deg)}
+
+.panel{overflow:hidden;transition:max-height .35s ease,opacity .25s;max-height:0;opacity:0}
+.panel.open{max-height:500px;opacity:1}
+
+.entry{
+  padding:.5rem .6rem;
+  border-radius:var(--radius);
+  font-size:.82rem;
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  transition:background .15s;
+  margin-bottom:1px;
+}
+.entry:hover{background:var(--card)}
+.entry .time{color:var(--dim);margin-right:.6rem;white-space:nowrap;font-size:.75rem;font-weight:450;min-width:4.5rem}
+.entry .del{
+  color:var(--danger);
+  cursor:pointer;
+  font-size:.7rem;
+  opacity:0;
+  transition:opacity .2s;
+  padding:0 .3rem;
+}
+.entry:hover .del{opacity:.6}
+.entry .del:hover{opacity:1}
+
+.todo{
+  display:flex;
+  align-items:flex-start;
+  gap:.45rem;
+  padding:.5rem .6rem;
+  font-size:.82rem;
+  border-radius:var(--radius);
+  transition:background .15s;
+  margin-bottom:1px;
+}
+.todo:hover{background:var(--card)}
+.todo input[type=checkbox]{
+  appearance:none;
+  -webkit-appearance:none;
+  width:16px;height:16px;
+  border:1.5px solid var(--dim);
+  border-radius:3px;
+  background:transparent;
+  cursor:pointer;
+  margin-top:2px;
+  flex-shrink:0;
+  transition:all .2s;
+  position:relative;
+}
+.todo input[type=checkbox]:checked{
+  background:var(--accent);
+  border-color:var(--accent);
+}
+.todo input[type=checkbox]:checked::after{
+  content:'✓';
+  position:absolute;
+  top:-1px;left:3px;
+  font-size:11px;
+  color:#08080c;
+  font-weight:700;
+}
+.todo.done span{text-decoration:line-through;color:var(--dim)}
+.todo .del{color:var(--danger);cursor:pointer;font-size:.7rem;opacity:0;margin-left:auto;transition:opacity .2s}
+.todo:hover .del{opacity:.6}
+.todo .del:hover{opacity:1}
+
+.empty{color:var(--dim);font-size:.78rem;padding:.5rem .6rem;font-style:italic;opacity:.5}
+
+.locked{text-align:center;padding:6rem 1rem;color:#1a1a24;font-size:.82rem;letter-spacing:.04em}
+
+.input-row{display:flex;gap:.4rem;padding:.4rem 0;flex-wrap:wrap}
+.input-row input,.input-row textarea{
+  flex:1;min-width:100px;
+  background:var(--card);
+  border:1px solid var(--line);
+  color:var(--text);
+  padding:.45rem .6rem;
+  font-family:inherit;
+  font-size:.8rem;
+  border-radius:var(--radius);
+  transition:border-color .2s,box-shadow .2s;
+}
+.input-row input:focus,.input-row textarea:focus{
+  outline:none;
+  border-color:var(--accent);
+  box-shadow:0 0 0 2px rgba(138,173,244,.1);
+}
+.input-row input::placeholder,.input-row textarea::placeholder{color:#3a3a44}
+.input-row button{
+  background:var(--accent);
+  border:none;
+  color:#08080c;
+  padding:.45rem 1rem;
+  font-family:inherit;
+  font-size:.78rem;
+  border-radius:var(--radius);
+  cursor:pointer;
+  font-weight:600;
+  transition:all .2s;
+  white-space:nowrap;
+}
+.input-row button:hover{background:var(--accent2);transform:translateY(-1px)}
+.input-row button:active{transform:translateY(0)}
+
+.status{font-size:.68rem;margin-left:.5rem;transition:opacity .3s}
+.status.ok{color:var(--green)}
+.status.err{color:var(--danger)}
+
+#key-setup{
+  background:var(--card2);
+  border:1px solid var(--line);
+  padding:1rem 1.2rem;
+  border-radius:var(--radius);
+  margin-bottom:1.2rem;
+}
+#key-setup p{font-size:.76rem;color:var(--dim);margin-bottom:.45rem}
+#key-setup input{
+  width:100%;
+  background:var(--bg);
+  border:1px solid var(--line);
+  color:var(--text);
+  padding:.45rem .6rem;
+  font-family:var(--font);
+  font-size:.78rem;
+  border-radius:var(--radius);
+  margin-bottom:.45rem;
+  transition:border-color .2s;
+}
+#key-setup input:focus{outline:none;border-color:var(--accent)}
+#key-setup button{
+  background:var(--accent);
+  border:none;
+  color:#08080c;
+  padding:.4rem 1.2rem;
+  font-family:inherit;
+  font-size:.78rem;
+  border-radius:var(--radius);
+  cursor:pointer;
+  font-weight:600;
+}
+
+/* 滚动条 */
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--line);border-radius:2px}
+
+/* 条目新增动画 */
+@keyframes fadeIn{
+  from{opacity:0;transform:translateY(-4px)}
+  to{opacity:1;transform:translateY(0)}
+}
+.entry,.todo{animation:fadeIn .3s ease}
+</style>
+</head>
+<body>
+
+<script>
+(function(){
+  var p = new URLSearchParams(window.location.search);
+  if(p.get("key") !== "xiaochi"){
+    document.body.innerHTML='<div class="locked">—<br><br>nothing here</div>';
+    return;
+  }
+})();
+</script>
+
+<h1>xc-notes</h1>
+
+<div id="key-setup" class="hide">
+  <p>首次使用 · 输入 JSONBin Master Key（仅存本机）</p>
+  <input type="password" id="mk-input" placeholder="粘贴 Master Key">
+  <button onclick="saveMK()">保存</button>
+</div>
+
+<span id="sync-status" class="status"></span>
+
+<h2 id="h2-sch" onclick="togglePanel('sch')">日程</h2>
+<div class="panel" id="panel-sch">
+  <div class="input-row">
+    <input type="text" id="sch-time" placeholder="时间 如 08-10 14:00">
+    <input type="text" id="sch-text" placeholder="干了什么">
+    <button onclick="addSch()">+</button>
+  </div>
+</div>
+<div id="sch-list"></div>
+
+<h2 id="h2-mood" onclick="togglePanel('mood')">心情</h2>
+<div class="panel" id="panel-mood">
+  <div class="input-row">
+    <input type="text" id="mood-time" placeholder="时间 如 08-10 03:00">
+    <input type="text" id="mood-text" placeholder="什么想法">
+    <button onclick="addMood()">+</button>
+  </div>
+</div>
+<div id="mood-list"></div>
+
+<h2 id="h2-todo" onclick="togglePanel('todo')">待办</h2>
+<div class="panel" id="panel-todo">
+  <div class="input-row">
+    <input type="text" id="todo-text" placeholder="新待办">
+    <button onclick="addTodo()">+</button>
+  </div>
+</div>
+<div id="todo-list"></div>
+
+<h2 style="cursor:default;">图片</h2>
+<div id="img-list"></div>
+
+<script>
+var BIN_ID='6a79cd17f5f4af5e29025b1a';
+var API_BASE='https://api.jsonbin.io/v3/b/'+BIN_ID;
+var DATA={sch:[],mood:[],todo:[]};
+
+function getMK(){return localStorage.getItem('xc_mk');}
+function saveMK(){
+  var mk=document.getElementById('mk-input').value.trim();
+  if(!mk)return;
+  localStorage.setItem('xc_mk',mk);
+  document.getElementById('key-setup').classList.add('hide');
+  syncFromCloud();
+}
+function ensureMK(){
+  if(!getMK()){document.getElementById('key-setup').classList.remove('hide');return false;}
+  return true;
+}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function status(msg,ok){
+  var el=document.getElementById('sync-status');
+  el.textContent=msg;el.className='status '+(ok?'ok':'err');
+  if(ok)setTimeout(function(){el.textContent='';},2500);
+}
+function saveLocal(){localStorage.setItem('xc_data',JSON.stringify(DATA));}
+function loadLocal(){var raw=localStorage.getItem('xc_data');if(raw){DATA=JSON.parse(raw);}}
+function syncFromCloud(){
+  fetch(API_BASE+'?meta=false')
+  .then(function(r){return r.json();})
+  .then(function(cloud){
+    if(cloud&&cloud.sch!==undefined){DATA=cloud;saveLocal();status('已从云端加载',true);}
+    renderAll();
+  })
+  .catch(function(){status('加载失败，使用本地缓存',false);loadLocal();renderAll();});
+}
+function pushToCloud(){
+  var mk=getMK();
+  if(!mk){status('未设置密钥',false);return;}
+  fetch(API_BASE,{
+    method:'PUT',
+    headers:{'Content-Type':'application/json','X-Master-Key':mk},
+    body:JSON.stringify(DATA)
+  })
+  .then(function(r){if(!r.ok)throw new Error('fail');status('已同步',true);})
+  .catch(function(){status('同步失败',false);saveLocal();});
+}
+function saveAll(){saveLocal();pushToCloud();renderAll();}
+
+function togglePanel(type){
+  var panel=document.getElementById('panel-'+type);
+  var h2=document.getElementById('h2-'+type);
+  panel.classList.toggle('open');
+  h2.classList.toggle('open');
+}
+
+function addSch(){
+  var t=document.getElementById('sch-time').value.trim();
+  var x=document.getElementById('sch-text').value.trim();
+  if(!t||!x)return;
+  DATA.sch.push({time:t,text:x});
+  document.getElementById('sch-time').value='';
+  document.getElementById('sch-text').value='';
+  saveAll();
+}
+function delSch(i){DATA.sch.splice(i,1);saveAll();}
+function renderSch(){
+  var html='';
+  DATA.sch.forEach(function(e,i){
+    html+='<div class="entry"><span><span class="time">'+esc(e.time)+'</span>'+esc(e.text)+'</span><span class="del" onclick="delSch('+i+')">✕</span></div>';
+  });
+  document.getElementById('sch-list').innerHTML=html||'<div class="empty">— 暂无 —</div>';
+}
+
+function addMood(){
+  var t=document.getElementById('mood-time').value.trim();
+  var x=document.getElementById('mood-text').value.trim();
+  if(!t||!x)return;
+  DATA.mood.push({time:t,text:x});
+  document.getElementById('mood-time').value='';
+  document.getElementById('mood-text').value='';
+  saveAll();
+}
+function delMood(i){DATA.mood.splice(i,1);saveAll();}
+function renderMood(){
+  var html='';
+  DATA.mood.forEach(function(e,i){
+    html+='<div class="entry"><span><span class="time">'+esc(e.time)+'</span>'+esc(e.text)+'</span><span class="del" onclick="delMood('+i+')">✕</span></div>';
+  });
+  document.getElementById('mood-list').innerHTML=html||'<div class="empty">— 暂无 —</div>';
+}
+
+function addTodo(){
+  var x=document.getElementById('todo-text').value.trim();
+  if(!x)return;
+  DATA.todo.push({text:x,done:false});
+  document.getElementById('todo-text').value='';
+  saveAll();
+}
+function toggleTodo(i){DATA.todo[i].done=!DATA.todo[i].done;saveAll();}
+function delTodo(i){DATA.todo.splice(i,1);saveAll();}
+function renderTodo(){
+  var html='';
+  DATA.todo.forEach(function(e,i){
+    var cls=e.done?'todo done':'todo';
+    html+='<div class="'+cls+'"><input type="checkbox" '+(e.done?'checked':'')+' onchange="toggleTodo('+i+')"><span>'+esc(e.text)+'</span><span class="del" onclick="delTodo('+i+')">✕</span></div>';
+  });
+  document.getElementById('todo-list').innerHTML=html||'<div class="empty">— 暂无 —</div>';
+}
+
+function renderAll(){renderSch();renderMood();renderTodo();}
+
+(function init(){
+  loadLocal();
+  if(ensureMK()){syncFromCloud();}else{renderAll();}
+})();
+</script>
+
+</body>
+</html>
