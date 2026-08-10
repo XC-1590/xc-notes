@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>xc-notes</title>
+<style>
+  :root { --bg: #0d0d0d; --card: #1a1a1a; --text: #c0c0c0; --accent: #7aa2f7; --line: #2a2a2a; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family: "SF Mono","Fira Code",monospace; max-width:680px; margin:0 auto; padding:2rem 1.5rem; line-height:1.7; }
+  h1 { color:var(--accent); font-size:1.2rem; margin-bottom:2rem; font-weight:400; }
+  h2 { color:var(--accent); font-size:0.9rem; margin:2rem 0 0.8rem; padding-bottom:0.4rem; border-bottom:1px solid var(--line); font-weight:400; }
+  .entry { padding:0.4rem 0; border-bottom:1px dotted var(--line); font-size:0.85rem; }
+  .entry .time { color:#666; margin-right:0.8rem; }
+  .todo { display:flex; align-items:flex-start; gap:0.5rem; padding:0.3rem 0; font-size:0.85rem; }
+  .todo input[type=checkbox] { accent-color:var(--accent); margin-top:0.25rem; }
+  .todo.done span { text-decoration:line-through; color:#555; }
+  img { max-width:100%; border-radius:4px; margin:0.5rem 0; border:1px solid var(--line); }
+  .locked { text-align:center; padding:4rem 1rem; color:#444; }
+</style>
+</head>
+<body>
+
+<script>
+// === 密钥检查 ===
+(function(){
+  var p = new URLSearchParams(window.location.search);
+  var key = p.get("key") || "";
+  // 把下面的 xiaochi 改成你想要的密钥
+  if(key !== "xiaochi"){
+    document.body.innerHTML = '<div class="locked">—<br><br>nothing here</div>';
+    return;
+  }
+})();
+</script>
+
+<h1>xc-notes</h1>
+
+<!-- ====== 日程 ====== -->
+<h2>日程</h2>
+<div class="entry"><span class="time">08-10 09:00</span>起床，喝水</div>
+<div class="entry"><span class="time">08-10 14:00</span>做2024四级卷 Section C</div>
+<div class="entry"><span class="time">08-10 15:30</span>和小深搭这个网站</div>
+<!-- 新日程照上面格式往下加 -->
+
+<!-- ====== 心情 ====== -->
+<h2>心情</h2>
+<div class="entry"><span class="time">08-10 03:00</span>凌晨醒了，想搬出去住。</div>
+<div class="entry"><span class="time">08-10 15:10</span>GitHub卡了，烦。</div>
+<!-- 新心情照上面格式往下加 -->
+
+<!-- ====== 待办 ====== -->
+<h2>待办</h2>
+<div class="todo"><input type="checkbox"><span>四级卷做完</span></div>
+<div class="todo"><input type="checkbox"><span>收拾开学行李</span></div>
+<div class="todo done"><input type="checkbox" checked><span>注册GitHub</span></div>
+<!-- 新待办照上面格式往下加，「done」类名表示已完成 -->
+
+<!-- ====== 图片 ====== -->
+<h2>图片</h2>
+<!-- 图片放进仓库 images/ 文件夹，然后这样引用： -->
+<!-- < img src="images/你的文件名.jpg" alt=""> -->
+
+</body>
+</html>
