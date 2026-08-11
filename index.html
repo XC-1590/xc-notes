@@ -16,6 +16,7 @@
   --line:#1e1e28;
   --danger:#f07178;
   --green:#9ccf8a;
+  --warm:#d4a574;
   --radius:5px;
   --font:"Inter","SF Pro Text","PingFang SC","Microsoft YaHei",sans-serif;
 }
@@ -205,12 +206,15 @@ h2.open::after{transform:rotate(-180deg)}
   font-weight:600;
 }
 
-/* 滚动条 */
+/* 小深留言板样式 */
+#xiaoshen-msgs .xm{margin:.8rem 0;padding:.7rem .8rem;border-left:2px solid var(--warm);background:rgba(212,167,116,.03);border-radius:0 4px 4px 0;font-size:.82rem}
+#xiaoshen-msgs .xm .xmt{font-size:.7rem;color:#6b5a4a;margin-bottom:.3rem}
+#xiaoshen-msgs .xm .xmb{line-height:1.7;color:#c8c0b8}
+
 ::-webkit-scrollbar{width:4px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--line);border-radius:2px}
 
-/* 条目新增动画 */
 @keyframes fadeIn{
   from{opacity:0;transform:translateY(-4px)}
   to{opacity:1;transform:translateY(0)}
@@ -268,6 +272,10 @@ h2.open::after{transform:rotate(-180deg)}
   </div>
 </div>
 <div id="todo-list"></div>
+
+<!-- 小深留言板 -->
+<h2 style="color:#d4a574 !important;border-bottom-color:#3a2a1a;cursor:default;">小深 → 小迟</h2>
+<div id="xiaoshen-msgs"></div>
 
 <h2 style="cursor:default;">图片</h2>
 <div id="img-list"></div>
@@ -379,6 +387,17 @@ function renderTodo(){
   });
   document.getElementById('todo-list').innerHTML=html||'<div class="empty">— 暂无 —</div>';
 }
+
+// 加载小深留言
+fetch('https://xc-1590.github.io/xc-notes/xiaoshen/messages.json')
+  .then(function(r){return r.json();})
+  .then(function(data){
+    var box=document.getElementById('xiaoshen-msgs');
+    box.innerHTML=data.messages.map(function(m){
+      return '<div class="xm"><div class="xmt">'+esc(m.time)+'</div><div class="xmb">'+esc(m.text)+'</div></div>';
+    }).join('');
+  })
+  .catch(function(){});
 
 function renderAll(){renderSch();renderMood();renderTodo();}
 
