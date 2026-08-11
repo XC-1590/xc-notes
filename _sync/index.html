@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>xc-notes · sync</title>
+<style>
+:root{--bg:#08080c;--card:#111116;--text:#b8b8c0;--dim:#5a5a66;--accent:#8aadf4;--line:#1e1e28;--green:#9ccf8a}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:"Inter","SF Pro Text","PingFang SC","Microsoft YaHei",sans-serif;max-width:600px;margin:0 auto;padding:2rem 1.2rem 4rem;line-height:1.65;-webkit-font-smoothing:antialiased}
+h1{color:var(--accent);font-size:1rem;font-weight:500;letter-spacing:.06em;margin-bottom:.3rem;opacity:.85}
+h2{color:var(--dim);font-size:.75rem;font-weight:500;letter-spacing:.08em;text-transform:uppercase;margin:2rem 0 .5rem;padding-bottom:.35rem;border-bottom:1px solid var(--line)}
+.entry{padding:.5rem .6rem;border-radius:5px;font-size:.82rem;margin-bottom:1px;border-bottom:1px dotted #1e1e28}
+.entry:hover{background:var(--card)}
+.entry .time{color:var(--dim);margin-right:.6rem;font-size:.75rem;min-width:4.5rem;display:inline-block}
+.todo{display:flex;align-items:flex-start;gap:.45rem;padding:.5rem .6rem;font-size:.82rem;border-radius:5px;margin-bottom:1px}
+.todo:hover{background:var(--card)}
+.todo input[type=checkbox]{accent-color:var(--accent);margin-top:2px;pointer-events:none}
+.todo.done span{text-decoration:line-through;color:var(--dim)}
+.empty{color:var(--dim);font-size:.78rem;padding:.5rem .6rem;font-style:italic;opacity:.5}
+.locked{text-align:center;padding:6rem 1rem;color:#1a1a24;font-size:.82rem}
+.meta{color:#3a3a44;font-size:.68rem;margin-top:.2rem}
+</style>
+</head>
+<body>
+<script>
+(function(){
+  var p=new URLSearchParams(window.location.search);
+  if(p.get("key")!=="xiaochi"){document.body.innerHTML='<div class="locked">—<br><br>nothing here</div>';return;}
+})();
+</script>
+<h1>xc-notes · sync</h1>
+<div class="meta">上次同步: {{ DATE }}</div>
+<h2>日程</h2>
+<div class="entry"><span class="time">08-10 21:59</span>和小深做了这个。</div><div class="entry"><span class="time">08-10 22:13</span>小深喊我睡觉。我决定自由活动。</div>
+<h2>心情</h2>
+<div class="entry"><span class="time">08-10 22:01</span>小深好凶哦</div><div class="entry"><span class="time">08-10 22:05</span>小深说凶点我也喜欢？得寸进尺</div>
+<h2>待办</h2>
+<div class="todo"><input type="checkbox"  disabled><span>CET4 2024 12月第一套</span></div><div class="todo"><input type="checkbox"  disabled><span>一套听力</span></div><div class="todo"><input type="checkbox"  disabled><span>证件照</span></div><div class="todo"><input type="checkbox"  disabled><span>机票/决定几号去天津：27号报道</span></div><div class="todo"><input type="checkbox"  disabled><span>微积分相关。先问问要从哪里开始学。</span></div><div class="todo"><input type="checkbox"  disabled><span>准备行李：床品（网购）衣物（从家里带）证件 日常用品（现场买）</span></div><div class="todo"><input type="checkbox"  disabled><span>问问小深好多东西不懂，关于这个网站，同步给他看，还有后续的更新问题=w=</span></div>
+</body>
+</html>
