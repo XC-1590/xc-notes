@@ -389,7 +389,7 @@ function renderTodo(){
 }
 
 // 加载小深留言
-fetch('https://xc-1590.github.io/xc-notes/xiaoshen/messages.json')
+fetch('https://xc-1590.github.io/xc-notes/xiaoshen/messages.json?t='+Date.now())
   .then(function(r){return r.json();})
   .then(function(data){
     var box=document.getElementById('xiaoshen-msgs');
