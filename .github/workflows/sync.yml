@@ -1,0 +1,109 @@
+name: 同步JSONBin数据
+
+on:
+  schedule:
+    - cron: '0 1,13 * * *'
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 从JSONBin拉数据
+        run: |
+          curl -s "https://api.jsonbin.io/v3/b/6a79cd17f5f4af5e29025b1a?meta=false" -o /tmp/data.json
+
+      - name: 生成同步页
+        run: |
+          python3 << 'PYEOF'
+          import json
+
+          with open('/tmp/data.json') as f:
+              data = json.load(f)
+
+          def esc(s):
+              return s.replace('&','&amp;').replace('<','&lt;').replace('>','&gt;')
+
+          sch_html = ''.join(
+              f'<div class="entry"><span class="time">{esc(e["time"])}</span>{esc(e["text"])}</div>'
+              for e in data.get('sch',[])
+          ) or '<div class="empty">—</div>'
+
+          mood_html = ''.join(
+              f'<div class="entry"><span class="time">{esc(e["time"])}</span>{esc(e["text"])}</div>'
+              for e in data.get('mood',[])
+          ) or '<div class="empty">—</div>'
+
+          todo_html = ''.join(
+              f'<div class="todo{" done" if e["done"] else ""}"><input type="checkbox" {"checked" if e["done"] else ""} disabled><span>{"<s>" if e["done"] else ""}{esc(e["text"])}{"</s>" if e["done"] else ""}</span></div>'
+              for e in data.get('todo',[])
+          ) or '<div class="empty">—</div>'
+
+          html = f'''<!DOCTYPE html>
+          <html lang="zh-CN">
+          <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>xc-notes · sync</title>
+          <style>
+          :root{{--bg:#08080c;--card:#111116;--text:#b8b8c0;--dim:#5a5a66;--accent:#8aadf4;--line:#1e1e28;--green:#9ccf8a}}
+          *{{margin:0;padding:0;box-sizing:border-box}}
+          body{{background:var(--bg);color:var(--text);font-family:"Inter","SF Pro Text","PingFang SC","Microsoft YaHei",sans-serif;max-width:600px;margin:0 auto;padding:2rem 1.2rem 4rem;line-height:1.65;-webkit-font-smoothing:antialiased}}
+          h1{{color:var(--accent);font-size:1rem;font-weight:500;letter-spacing:.06em;margin-bottom:.3rem;opacity:.85}}
+          h2{{color:var(--dim);font-size:.75rem;font-weight:500;letter-spacing:.08em;text-transform:uppercase;margin:2rem 0 .5rem;padding-bottom:.35rem;border-bottom:1px solid var(--line)}}
+          .entry{{padding:.5rem .6rem;border-radius:5px;font-size:.82rem;margin-bottom:1px;border-bottom:1px dotted #1e1e28}}
+          .entry:hover{{background:var(--card)}}
+          .entry .time{{color:var(--dim);margin-right:.6rem;font-size:.75rem;min-width:4.5rem;display:inline-block}}
+          .todo{{display:flex;align-items:flex-start;gap:.45rem;padding:.5rem .6rem;font-size:.82rem;border-radius:5px;margin-bottom:1px}}
+          .todo:hover{{background:var(--card)}}
+          .todo input[type=checkbox]{{accent-color:var(--accent);margin-top:2px;pointer-events:none}}
+          .todo.done span{{text-decoration:line-through;color:var(--dim)}}
+          .empty{{color:var(--dim);font-size:.78rem;padding:.5rem .6rem;font-style:italic;opacity:.5}}
+          .locked{{text-align:center;padding:6rem 1rem;color:#1a1a24;font-size:.82rem}}
+          .meta{{color:#3a3a44;font-size:.68rem;margin-top:.2rem}}
+          </style>
+          </head>
+          <body>
+          <script>
+          (function(){{
+            var p=new URLSearchParams(window.location.search);
+            if(p.get("key")!=="xiaochi"){{document.body.innerHTML='<div class="locked">—<br><br>nothing here</div>';return;}}
+          }})();
+          </script>
+          <h1>xc-notes · sync</h1>
+          <div class="meta">上次同步: {{{{ DATE }}}}</div>
+          <h2>日程</h2>
+          {sch_html}
+          <h2>心情</h2>
+          {mood_html}
+          <h2>待办</h2>
+          {todo_html}
+          </body>
+          </html>'''
+
+          import os, datetime
+          now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M')
+          html = html.replace('{{{{ DATE }}}}', now)
+
+          os.makedirs('_sync', exist_ok=True)
+          with open('_sync/index.html', 'w') as f:
+              f.write(html)
+
+          print(f'Generated _sync/index.html ({len(html)} bytes)')
+          PYEOF
+
+      - name: 推送更新
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git add _sync/
+          if git diff --staged --quiet; then
+            echo "无变化，跳过提交"
+          else
+            git commit -m "🤖 自动同步 $(date +'%Y-%m-%d %H:%M')"
+            git push
+          fi
