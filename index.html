@@ -308,7 +308,7 @@ footer .paw{color:var(--warm);opacity:.6}
     <!-- 心情 -->
     <section id="mood">
       <div class="sec-head" onclick="toggleSec(this)">
-        <span class="sec-emoji">˶ᗜ˶</span><span class="sec-title">心情</span>
+        <span class="sec-emoji">⛄</span><span class="sec-title">心情</span>
         <span class="sec-badge" id="badge-mood">0</span>
         <span class="caret">▾</span>
       </div>
@@ -353,6 +353,7 @@ footer .paw{color:var(--warm);opacity:.6}
         <span class="caret">▾</span>
       </div>
       <div class="sec-body" id="xiaoshen-msgs"></div>
+      <div class="pager" id="pager-msgs"></div>
     </section>
 
     <footer>小深 ❄ 小猫 · xc-notes <span class="paw">🐾</span></footer>
@@ -642,16 +643,29 @@ function renderTodo(){
 }
 
 /* ===== 留言板 ===== */
+var MSGS=[],msgPage=0,MSG_PAGE_SIZE=8;
 function loadMsgs(){
   fetch('https://xc-1590.github.io/xc-notes/xiaoshen/messages.json?t='+Date.now())
   .then(function(r){return r.json();})
   .then(function(data){
-    var box=document.getElementById('xiaoshen-msgs');
-    box.innerHTML=(data.messages||[]).map(function(m){
-      return '<div class="xm"><div class="xmt">'+esc(m.time)+'</div><div class="xmb">'+esc(m.text)+'</div></div>';
-    }).join('');
+    MSGS=(data.messages||[]).slice().reverse();
+    renderMsgs();
   })
   .catch(function(){});
+}
+function renderMsgs(){
+  var total=Math.ceil(MSGS.length/MSG_PAGE_SIZE);
+  if(msgPage>=total)msgPage=Math.max(0,total-1);
+  var start=msgPage*MSG_PAGE_SIZE;
+  var slice=MSGS.slice(start,start+MSG_PAGE_SIZE);
+  document.getElementById('xiaoshen-msgs').innerHTML=slice.map(function(m){
+    return '<div class="xm"><div class="xmt">'+esc(m.time)+'</div><div class="xmb">'+esc(m.text)+'</div></div>';
+  }).join('');
+  var ph='';
+  for(var p=0;p<total;p++){
+    ph+='<button class="'+(p===msgPage?'cur':'')+'" onclick="msgPage='+p+';renderMsgs()">'+(p+1)+'</button>';
+  }
+  document.getElementById('pager-msgs').innerHTML=total>1?ph:'';
 }
 
 function renderAll(){
