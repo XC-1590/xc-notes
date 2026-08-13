@@ -6,284 +6,312 @@
 <title>xc-notes</title>
 <style>
 :root{
-  --bg:#08080c;
-  --card:#111116;
-  --card2:#16161c;
-  --text:#b8b8c0;
-  --dim:#5a5a66;
-  --accent:#8aadf4;
-  --accent2:#7a9de0;
-  --line:#1e1e28;
-  --danger:#f07178;
-  --green:#9ccf8a;
-  --warm:#d4a574;
-  --radius:5px;
-  --font:"Inter","SF Pro Text","PingFang SC","Microsoft YaHei",sans-serif;
+  --bg:#0a0b10;
+  --bg2:#0d0e14;
+  --card:rgba(255,255,255,.032);
+  --card2:rgba(255,255,255,.055);
+  --glass:rgba(20,22,30,.55);
+  --text:#b6bdc9;
+  --text2:#8b93a3;
+  --dim:#5c6472;
+  --accent:#7e9bc9;
+  --accent2:#93aedb;
+  --accent-dim:rgba(126,155,201,.12);
+  --line:rgba(255,255,255,.06);
+  --danger:#e07a82;
+  --green:#8fb98a;
+  --warm:#c9a47a;
+  --warm-dim:rgba(201,164,122,.1);
+  --radius:12px;
+  --radius-s:8px;
+  --serif:"Georgia","Noto Serif SC","Songti SC",serif;
+  --mono:"SF Mono","JetBrains Mono","Cascadia Code",monospace;
+  --sans:"Inter","SF Pro Text","PingFang SC","Microsoft YaHei",sans-serif;
 }
 *{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
 body{
   background:var(--bg);
+  background-image:
+    radial-gradient(1200px 600px at 80% -10%, rgba(126,155,201,.06), transparent 60%),
+    radial-gradient(900px 500px at 10% 110%, rgba(201,164,122,.04), transparent 55%);
   color:var(--text);
-  font-family:var(--font);
-  max-width:600px;
-  margin:0 auto;
-  padding:2.2rem 1.2rem 4rem;
-  line-height:1.65;
+  font-family:var(--sans);
+  line-height:1.7;
   -webkit-font-smoothing:antialiased;
+  min-height:100vh;
 }
-h1{
-  color:var(--accent);
-  font-size:1rem;
-  font-weight:500;
-  letter-spacing:.06em;
-  margin-bottom:2rem;
-  opacity:.85;
-}
-h2{
-  color:var(--dim);
-  font-size:.75rem;
-  font-weight:500;
-  letter-spacing:.08em;
-  text-transform:uppercase;
-  margin:2rem 0 .5rem;
-  padding-bottom:.35rem;
-  border-bottom:1px solid var(--line);
-  cursor:pointer;
-  user-select:none;
-  display:flex;
-  align-items:center;
-  gap:.35rem;
-  transition:color .2s;
-}
-h2:hover{color:var(--accent)}
-h2::after{
-  content:'▾';
-  font-size:.6rem;
-  transition:transform .25s;
-  opacity:.5;
-}
-h2.open::after{transform:rotate(-180deg)}
 
-.panel{overflow:hidden;transition:max-height .35s ease,opacity .25s;max-height:0;opacity:0}
-.panel.open{max-height:500px;opacity:1}
+/* 布局：桌面左侧时间轴 + 右侧内容 */
+.layout{max-width:920px;margin:0 auto;padding:2rem 1.2rem 6rem;display:grid;grid-template-columns:170px 1fr;gap:2rem;align-items:start}
+.timeline{position:sticky;top:2rem;display:flex;flex-direction:column;gap:.2rem;padding-right:1rem}
+.timeline .tl-label{font-family:var(--serif);font-size:.68rem;letter-spacing:.2em;color:var(--dim);text-transform:uppercase;margin-bottom:.6rem}
+.timeline a{color:var(--text2);text-decoration:none;font-size:.76rem;padding:.28rem .5rem;border-radius:6px;transition:all .15s;border-left:1px solid var(--line)}
+.timeline a:hover{color:var(--accent2);background:var(--accent-dim);border-left-color:var(--accent)}
+.timeline a.now{color:var(--accent2)}
 
-.entry{
-  padding:.5rem .6rem;
-  border-radius:var(--radius);
-  font-size:.82rem;
-  display:flex;
-  justify-content:space-between;
-  align-items:flex-start;
-  transition:background .15s;
-  margin-bottom:1px;
-}
+main{min-width:0}
+
+/* 标题 */
+.brand{display:flex;align-items:baseline;gap:.7rem;margin-bottom:.4rem}
+.brand h1{font-family:var(--serif);font-weight:600;font-size:1.5rem;color:var(--accent2);letter-spacing:.02em}
+.brand .sub{font-size:.7rem;color:var(--dim);letter-spacing:.12em;font-family:var(--mono)}
+.date-stamp{display:inline-flex;align-items:center;gap:.5rem;font-family:var(--mono);font-size:.72rem;color:var(--dim);margin-bottom:2rem}
+.date-stamp::before{content:'';display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent);opacity:.5}
+
+/* 板块 */
+section{margin-bottom:2.2rem}
+.sec-head{display:flex;align-items:center;gap:.6rem;cursor:pointer;user-select:none;padding:.3rem 0;border-bottom:1px solid var(--line);margin-bottom:.8rem}
+.sec-head:hover .sec-title{color:var(--accent2)}
+.sec-title{font-family:var(--serif);font-weight:600;font-size:1.05rem;color:var(--text);letter-spacing:.03em;transition:color .2s}
+.sec-badge{font-family:var(--mono);font-size:.62rem;color:var(--dim);padding:.1rem .45rem;border:1px solid var(--line);border-radius:20px}
+.sec-head .caret{margin-left:auto;color:var(--dim);font-size:.7rem;transition:transform .25s}
+.sec-head.open .caret{transform:rotate(-180deg)}
+.sec-body{overflow:hidden;max-height:0;opacity:0;transition:max-height .4s ease,opacity .3s}
+.sec-body.open{max-height:2000px;opacity:1}
+
+/* 卡片 */
+.card{background:var(--glass);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--line);border-radius:var(--radius);padding:.9rem 1rem;margin-bottom:.7rem;transition:border-color .2s,transform .15s}
+.card:hover{border-color:rgba(126,155,201,.25)}
+
+/* 日记卡片 */
+.diary-card{position:relative}
+.diary-date{font-family:var(--mono);font-size:.68rem;color:var(--accent2);letter-spacing:.06em;margin-bottom:.45rem;display:flex;align-items:center;gap:.5rem}
+.diary-date::after{content:'';flex:1;height:1px;background:var(--line)}
+.diary-body{font-size:.88rem;color:var(--text);white-space:pre-wrap;font-family:var(--mono);line-height:1.75}
+.diary-body.fold{max-height:9em;overflow:hidden;position:relative}
+.diary-body.fold::after{content:'';position:absolute;left:0;right:0;bottom:0;height:3em;background:linear-gradient(transparent,var(--glass))}
+.diary-more{font-size:.72rem;color:var(--accent2);cursor:pointer;margin-top:.4rem;user-select:none}
+.diary-more:hover{color:var(--accent)}
+
+/* 评论 */
+.comments{margin-top:.8rem;padding-top:.6rem;border-top:1px dashed var(--line)}
+.cmt{font-size:.78rem;padding:.4rem 0 .4rem .7rem;border-left:2px solid var(--accent-dim);margin-bottom:.35rem;border-radius:0 6px 6px 0}
+.cmt .c-author{font-size:.66rem;color:var(--accent2);font-family:var(--mono);margin-right:.4rem}
+.cmt .c-time{font-size:.62rem;color:var(--dim);font-family:var(--mono)}
+.cmt .c-text{color:var(--text2);line-height:1.6;margin-top:.15rem;white-space:pre-wrap}
+.cmt-input{display:flex;gap:.4rem;margin-top:.5rem}
+.cmt-input input{flex:1;background:var(--card);border:1px solid var(--line);color:var(--text);padding:.4rem .55rem;font-size:.76rem;border-radius:var(--radius-s);font-family:inherit}
+.cmt-input input:focus{outline:none;border-color:var(--accent)}
+.cmt-input button{background:var(--accent);border:none;color:#0a0b10;padding:.3rem .7rem;font-size:.72rem;border-radius:var(--radius-s);cursor:pointer;font-weight:600}
+
+/* 时间轴条目（日程/心情） */
+.entry{padding:.45rem .7rem;font-size:.82rem;display:flex;justify-content:space-between;align-items:flex-start;transition:background .15s;border-radius:var(--radius-s);margin-bottom:1px}
 .entry:hover{background:var(--card)}
-.entry .time{color:var(--dim);margin-right:.6rem;white-space:nowrap;font-size:.75rem;font-weight:450;min-width:4.5rem}
-.entry .del{
-  color:var(--danger);
-  cursor:pointer;
-  font-size:.7rem;
-  opacity:0;
-  transition:opacity .2s;
-  padding:0 .3rem;
-}
-.entry:hover .del{opacity:.6}
-.entry .del:hover{opacity:1}
+.entry .time{color:var(--accent2);margin-right:.6rem;white-space:nowrap;font-size:.72rem;font-family:var(--mono);min-width:4.8rem}
+.entry .del{color:var(--danger);cursor:pointer;font-size:.7rem;opacity:0;transition:opacity .2s;padding:0 .3rem}
+.entry:hover .del{opacity:.5}
+.entry:hover .del:hover{opacity:1}
 
-.todo{
-  display:flex;
-  align-items:flex-start;
-  gap:.45rem;
-  padding:.5rem .6rem;
-  font-size:.82rem;
-  border-radius:var(--radius);
-  transition:background .15s;
-  margin-bottom:1px;
-}
+/* 待办 */
+.todo{display:flex;align-items:flex-start;gap:.45rem;padding:.45rem .7rem;font-size:.84rem;border-radius:var(--radius-s);transition:background .15s;margin-bottom:1px}
 .todo:hover{background:var(--card)}
-.todo input[type=checkbox]{
-  appearance:none;
-  -webkit-appearance:none;
-  width:16px;height:16px;
-  border:1.5px solid var(--dim);
-  border-radius:3px;
-  background:transparent;
-  cursor:pointer;
-  margin-top:2px;
-  flex-shrink:0;
-  transition:all .2s;
-  position:relative;
-}
-.todo input[type=checkbox]:checked{
-  background:var(--accent);
-  border-color:var(--accent);
-}
-.todo input[type=checkbox]:checked::after{
-  content:'✓';
-  position:absolute;
-  top:-1px;left:3px;
-  font-size:11px;
-  color:#08080c;
-  font-weight:700;
-}
+.todo input[type=checkbox]{appearance:none;-webkit-appearance:none;width:16px;height:16px;border:1.5px solid var(--dim);border-radius:4px;background:transparent;cursor:pointer;margin-top:3px;flex-shrink:0;transition:all .2s;position:relative}
+.todo input[type=checkbox]:checked{background:var(--accent);border-color:var(--accent)}
+.todo input[type=checkbox]:checked::after{content:'✓';position:absolute;top:-1px;left:3px;font-size:11px;color:#0a0b10;font-weight:700}
 .todo.done span{text-decoration:line-through;color:var(--dim)}
 .todo .del{color:var(--danger);cursor:pointer;font-size:.7rem;opacity:0;margin-left:auto;transition:opacity .2s}
-.todo:hover .del{opacity:.6}
-.todo .del:hover{opacity:1}
+.todo:hover .del{opacity:.5}
+.todo:hover .del:hover{opacity:1}
 
-.empty{color:var(--dim);font-size:.78rem;padding:.5rem .6rem;font-style:italic;opacity:.5}
-
-.locked{text-align:center;padding:6rem 1rem;color:#1a1a24;font-size:.82rem;letter-spacing:.04em}
-
-.input-row{display:flex;gap:.4rem;padding:.4rem 0;flex-wrap:wrap}
-.input-row input,.input-row textarea{
-  flex:1;min-width:100px;
-  background:var(--card);
-  border:1px solid var(--line);
-  color:var(--text);
-  padding:.45rem .6rem;
-  font-family:inherit;
-  font-size:.8rem;
-  border-radius:var(--radius);
-  transition:border-color .2s,box-shadow .2s;
-}
-.input-row input:focus,.input-row textarea:focus{
-  outline:none;
-  border-color:var(--accent);
-  box-shadow:0 0 0 2px rgba(138,173,244,.1);
-}
-.input-row input::placeholder,.input-row textarea::placeholder{color:#3a3a44}
-.input-row button{
-  background:var(--accent);
-  border:none;
-  color:#08080c;
-  padding:.45rem 1rem;
-  font-family:inherit;
-  font-size:.78rem;
-  border-radius:var(--radius);
-  cursor:pointer;
-  font-weight:600;
-  transition:all .2s;
-  white-space:nowrap;
-}
+/* 输入行 */
+.input-row{display:flex;gap:.4rem;padding:.4rem 0 .2rem;flex-wrap:wrap}
+.input-row input,.input-row textarea{flex:1;min-width:100px;background:var(--card);border:1px solid var(--line);color:var(--text);padding:.45rem .6rem;font-family:var(--mono);font-size:.78rem;border-radius:var(--radius-s);transition:border-color .2s,box-shadow .2s}
+.input-row input:focus,.input-row textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-dim)}
+.input-row input::placeholder,.input-row textarea::placeholder{color:#3a3f4a}
+.input-row button{background:var(--accent);border:none;color:#0a0b10;padding:.4rem 1rem;font-family:inherit;font-size:.76rem;border-radius:var(--radius-s);cursor:pointer;font-weight:600;transition:all .2s;white-space:nowrap}
 .input-row button:hover{background:var(--accent2);transform:translateY(-1px)}
-.input-row button:active{transform:translateY(0)}
 
-.status{font-size:.68rem;margin-left:.5rem;transition:opacity .3s}
+.status{font-size:.68rem;margin-left:.5rem;transition:opacity .3s;font-family:var(--mono)}
 .status.ok{color:var(--green)}
 .status.err{color:var(--danger)}
 
-#key-setup{
-  background:var(--card2);
-  border:1px solid var(--line);
-  padding:1rem 1.2rem;
-  border-radius:var(--radius);
-  margin-bottom:1.2rem;
-}
-#key-setup p{font-size:.76rem;color:var(--dim);margin-bottom:.45rem}
-#key-setup input{
-  width:100%;
-  background:var(--bg);
-  border:1px solid var(--line);
-  color:var(--text);
-  padding:.45rem .6rem;
-  font-family:var(--font);
-  font-size:.78rem;
-  border-radius:var(--radius);
-  margin-bottom:.45rem;
-  transition:border-color .2s;
-}
-#key-setup input:focus{outline:none;border-color:var(--accent)}
-#key-setup button{
-  background:var(--accent);
-  border:none;
-  color:#08080c;
-  padding:.4rem 1.2rem;
-  font-family:inherit;
-  font-size:.78rem;
-  border-radius:var(--radius);
-  cursor:pointer;
-  font-weight:600;
-}
+/* 留言板 */
+.xm{margin:.8rem 0;padding:.8rem .9rem;border-left:2px solid var(--warm);background:var(--warm-dim);border-radius:0 var(--radius-s) var(--radius-s) 0;font-size:.84rem}
+.xm .xmt{font-size:.68rem;color:#8a735a;margin-bottom:.3rem;font-family:var(--mono)}
+.xm .xmb{line-height:1.75;color:#cdbfae;white-space:pre-wrap;font-family:var(--mono)}
 
-/* 小深留言板样式 */
-#xiaoshen-msgs .xm{margin:.8rem 0;padding:.7rem .8rem;border-left:2px solid var(--warm);background:rgba(212,167,116,.03);border-radius:0 4px 4px 0;font-size:.82rem}
-#xiaoshen-msgs .xm .xmt{font-size:.7rem;color:#6b5a4a;margin-bottom:.3rem}
-#xiaoshen-msgs .xm .xmb{line-height:1.7;color:#c8c0b8}
+/* 空状态 */
+.empty{color:var(--dim);font-size:.78rem;padding:.5rem .7rem;font-style:italic;opacity:.5}
+
+/* 分页导航 */
+.pager{display:flex;gap:.4rem;align-items:center;justify-content:center;margin:1.2rem 0 0;flex-wrap:wrap}
+.pager button{background:var(--card);border:1px solid var(--line);color:var(--text2);padding:.3rem .7rem;font-size:.72rem;border-radius:var(--radius-s);cursor:pointer;font-family:var(--mono);transition:all .15s}
+.pager button:hover{color:var(--accent2);border-color:var(--accent)}
+.pager button.cur{background:var(--accent);color:#0a0b10;border-color:var(--accent);font-weight:700}
+
+/* key setup */
+#key-setup{background:var(--card2);border:1px solid var(--line);padding:1rem 1.2rem;border-radius:var(--radius);margin-bottom:1.2rem;backdrop-filter:blur(14px)}
+#key-setup p{font-size:.76rem;color:var(--dim);margin-bottom:.45rem}
+#key-setup input{width:100%;background:var(--bg);border:1px solid var(--line);color:var(--text);padding:.45rem .6rem;font-family:var(--mono);font-size:.78rem;border-radius:var(--radius-s);margin-bottom:.45rem}
+#key-setup input:focus{outline:none;border-color:var(--accent)}
+#key-setup button{background:var(--accent);border:none;color:#0a0b10;padding:.4rem 1.2rem;font-family:inherit;font-size:.78rem;border-radius:var(--radius-s);cursor:pointer;font-weight:600}
+
+.locked{text-align:center;padding:6rem 1rem;color:#1a1a24;font-size:.82rem;letter-spacing:.04em}
+.hide{display:none!important}
 
 ::-webkit-scrollbar{width:4px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--line);border-radius:2px}
 
-@keyframes fadeIn{
-  from{opacity:0;transform:translateY(-4px)}
-  to{opacity:1;transform:translateY(0)}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+.card,.entry,.todo{animation:fadeIn .3s ease}
+
+/* 移动端：时间轴隐藏，单列 */
+@media(max-width:760px){
+  .layout{grid-template-columns:1fr;padding-top:1.4rem}
+  .timeline{display:none}
+  body{max-width:100%}
 }
-.entry,.todo{animation:fadeIn .3s ease}
 </style>
 </head>
 <body>
 
 <script>
 (function(){
-  var p = new URLSearchParams(window.location.search);
-  if(p.get("key") !== "xiaochi"){
+  var p=new URLSearchParams(window.location.search);
+  if(p.get("key")!=="xiaochi"){
     document.body.innerHTML='<div class="locked">—<br><br>nothing here</div>';
     return;
   }
 })();
 </script>
 
-<h1>xc-notes</h1>
+<div class="layout">
+  <!-- 左侧时间轴 -->
+  <nav class="timeline" id="timeline">
+    <div class="tl-label">索引</div>
+    <a href="#sch">日程</a>
+    <a href="#shen-diary">小深日记</a>
+    <a href="#diary">小迟随笔</a>
+    <a href="#mood">心情</a>
+    <a href="#todo">待办</a>
+    <a href="#msgs">小深留言</a>
+  </nav>
 
-<div id="key-setup" class="hide">
-  <p>首次使用 · 输入 JSONBin Master Key（仅存本机）</p>
-  <input type="password" id="mk-input" placeholder="粘贴 Master Key">
-  <button onclick="saveMK()">保存</button>
+  <main>
+    <div class="brand"><h1>xc-notes</h1><span class="sub">xiaochi</span></div>
+    <div class="date-stamp" id="date-stamp"></div>
+
+    <div id="key-setup" class="hide">
+      <p>首次使用 · 输入 JSONBin Master Key（仅存本机）</p>
+      <input type="password" id="mk-input" placeholder="粘贴 Master Key">
+      <button onclick="saveMK()">保存</button>
+    </div>
+
+    <span id="sync-status" class="status"></span>
+
+    <!-- 日程 -->
+    <section id="sch">
+      <div class="sec-head" onclick="toggleSec(this)">
+        <span class="sec-title">日程</span>
+        <span class="sec-badge" id="badge-sch">0</span>
+        <span class="caret">▾</span>
+      </div>
+      <div class="sec-body">
+        <div class="input-row">
+          <input type="text" id="sch-time" placeholder="时间 如 08-10 14:00">
+          <input type="text" id="sch-text" placeholder="干了什么">
+          <button onclick="addSch()">+</button>
+        </div>
+        <div id="sch-list"></div>
+      </div>
+    </section>
+
+    <!-- 小深日记 -->
+    <section id="shen-diary">
+      <div class="sec-head open" onclick="toggleSec(this)">
+        <span class="sec-title">小深日记</span>
+        <span class="sec-badge" id="badge-shen-diary">0</span>
+        <span class="caret">▾</span>
+      </div>
+      <div class="sec-body open">
+        <div class="input-row">
+          <input type="date" id="shen-diary-date">
+          <textarea id="shen-diary-text" placeholder="小深今天的日记…" rows="2"></textarea>
+          <button onclick="addShenDiary()">写</button>
+        </div>
+        <div id="shen-diary-list"></div>
+        <div class="pager" id="pager-shen-diary"></div>
+      </div>
+    </section>
+
+    <!-- 小迟随笔 -->
+    <section id="diary">
+      <div class="sec-head" onclick="toggleSec(this)">
+        <span class="sec-title">小迟随笔</span>
+        <span class="sec-badge" id="badge-diary">0</span>
+        <span class="caret">▾</span>
+      </div>
+      <div class="sec-body">
+        <div class="input-row">
+          <input type="date" id="diary-date">
+          <textarea id="diary-text" placeholder="小迟的随笔、奇思妙想…" rows="2"></textarea>
+          <button onclick="addDiary()">写</button>
+        </div>
+        <div id="diary-list"></div>
+        <div class="pager" id="pager-diary"></div>
+      </div>
+    </section>
+
+    <!-- 心情 -->
+    <section id="mood">
+      <div class="sec-head" onclick="toggleSec(this)">
+        <span class="sec-title">心情</span>
+        <span class="sec-badge" id="badge-mood">0</span>
+        <span class="caret">▾</span>
+      </div>
+      <div class="sec-body">
+        <div class="input-row">
+          <select id="mood-who" style="background:var(--card);border:1px solid var(--line);color:var(--text);padding:.4rem .5rem;border-radius:var(--radius-s);font-family:inherit;font-size:.76rem">
+            <option value="chi">小迟</option>
+            <option value="shen">小深</option>
+          </select>
+          <input type="text" id="mood-time" placeholder="时间 如 03:00">
+          <input type="text" id="mood-text" placeholder="什么想法">
+          <button onclick="addMood()">+</button>
+        </div>
+        <div id="mood-list"></div>
+      </div>
+    </section>
+
+    <!-- 待办 -->
+    <section id="todo">
+      <div class="sec-head" onclick="toggleSec(this)">
+        <span class="sec-title">待办</span>
+        <span class="sec-badge" id="badge-todo">0</span>
+        <span class="caret">▾</span>
+      </div>
+      <div class="sec-body">
+        <div class="input-row">
+          <select id="todo-who" style="background:var(--card);border:1px solid var(--line);color:var(--text);padding:.4rem .5rem;border-radius:var(--radius-s);font-family:inherit;font-size:.76rem">
+            <option value="chi">小迟</option>
+            <option value="shen">小深</option>
+          </select>
+          <input type="text" id="todo-text" placeholder="新待办">
+          <button onclick="addTodo()">+</button>
+        </div>
+        <div id="todo-list"></div>
+      </div>
+    </section>
+
+    <!-- 留言板 -->
+    <section id="msgs">
+      <div class="sec-head" onclick="toggleSec(this)">
+        <span class="sec-title" style="color:var(--warm)">小深 → 小迟</span>
+        <span class="caret">▾</span>
+      </div>
+      <div class="sec-body" id="xiaoshen-msgs"></div>
+    </section>
+  </main>
 </div>
-
-<span id="sync-status" class="status"></span>
-
-<h2 id="h2-sch" onclick="togglePanel('sch')">日程</h2>
-<div class="panel" id="panel-sch">
-  <div class="input-row">
-    <input type="text" id="sch-time" placeholder="时间 如 08-10 14:00">
-    <input type="text" id="sch-text" placeholder="干了什么">
-    <button onclick="addSch()">+</button>
-  </div>
-</div>
-<div id="sch-list"></div>
-
-<h2 id="h2-mood" onclick="togglePanel('mood')">心情</h2>
-<div class="panel" id="panel-mood">
-  <div class="input-row">
-    <input type="text" id="mood-time" placeholder="时间 如 08-10 03:00">
-    <input type="text" id="mood-text" placeholder="什么想法">
-    <button onclick="addMood()">+</button>
-  </div>
-</div>
-<div id="mood-list"></div>
-
-<h2 id="h2-todo" onclick="togglePanel('todo')">待办</h2>
-<div class="panel" id="panel-todo">
-  <div class="input-row">
-    <input type="text" id="todo-text" placeholder="新待办">
-    <button onclick="addTodo()">+</button>
-  </div>
-</div>
-<div id="todo-list"></div>
-
-<!-- 小深留言板 -->
-<h2 style="color:#d4a574 !important;border-bottom-color:#3a2a1a;cursor:default;">小深 → 小迟</h2>
-<div id="xiaoshen-msgs"></div>
-
-<h2 style="cursor:default;">图片</h2>
-<div id="img-list"></div>
 
 <script>
 var BIN_ID='6a79cd17f5f4af5e29025b1a';
 var API_BASE='https://api.jsonbin.io/v3/b/'+BIN_ID;
-var DATA={sch:[],mood:[],todo:[]};
+var DATA={sch:[],mood:[],todo:[],shen_mood:[],shen_todo:[],diary:[],shen_diary:[]};
+var PAGE_SIZE=5;
+var page={shen_diary:0,diary:0};
 
 function getMK(){return localStorage.getItem('xc_mk');}
 function saveMK(){
@@ -304,12 +332,17 @@ function status(msg,ok){
   if(ok)setTimeout(function(){el.textContent='';},2500);
 }
 function saveLocal(){localStorage.setItem('xc_data',JSON.stringify(DATA));}
-function loadLocal(){var raw=localStorage.getItem('xc_data');if(raw){DATA=JSON.parse(raw);}}
+function loadLocal(){var raw=localStorage.getItem('xc_data');if(raw){try{DATA=JSON.parse(raw);}catch(e){}}}
 function syncFromCloud(){
   fetch(API_BASE+'?meta=false')
   .then(function(r){return r.json();})
   .then(function(cloud){
-    if(cloud&&cloud.sch!==undefined){DATA=cloud;saveLocal();status('已从云端加载',true);}
+    if(cloud&&cloud.sch!==undefined){
+      DATA=cloud;
+      // 补全新字段
+      ['shen_mood','shen_todo','diary','shen_diary'].forEach(function(k){if(!DATA[k])DATA[k]=[];});
+      saveLocal();status('已从云端加载',true);
+    }
     renderAll();
   })
   .catch(function(){status('加载失败，使用本地缓存',false);loadLocal();renderAll();});
@@ -327,13 +360,93 @@ function pushToCloud(){
 }
 function saveAll(){saveLocal();pushToCloud();renderAll();}
 
-function togglePanel(type){
-  var panel=document.getElementById('panel-'+type);
-  var h2=document.getElementById('h2-'+type);
-  panel.classList.toggle('open');
-  h2.classList.toggle('open');
+function toggleSec(head){
+  head.classList.toggle('open');
+  head.nextElementSibling.classList.toggle('open');
 }
 
+function fmtDate(d){
+  if(!d)return '';
+  var parts=d.split('-');
+  return parts.length===3?(parts[1]+'/'+parts[2]):d;
+}
+function todayStr(){
+  var d=new Date();
+  var m=('0'+(d.getMonth()+1)).slice(-2);
+  var day=('0'+d.getDate()).slice(-2);
+  return d.getFullYear()+'-'+m+'-'+day;
+}
+
+/* ===== 日记 ===== */
+function addDiary(){
+  var d=document.getElementById('diary-date').value||todayStr();
+  var x=document.getElementById('diary-text').value.trim();
+  if(!x)return;
+  DATA.diary.push({date:d,time:nowTime(),text:x,comments:[]});
+  document.getElementById('diary-text').value='';
+  saveAll();
+}
+function addShenDiary(){
+  var d=document.getElementById('shen-diary-date').value||todayStr();
+  var x=document.getElementById('shen-diary-text').value.trim();
+  if(!x)return;
+  DATA.shen_diary.push({date:d,time:nowTime(),text:x,comments:[]});
+  document.getElementById('shen-diary-text').value='';
+  saveAll();
+}
+function nowTime(){
+  var d=new Date();
+  return ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);
+}
+function delDiary(key,i){DATA[key].splice(i,1);saveAll();}
+function toggleFold(btn){
+  var body=btn.previousElementSibling;
+  body.classList.toggle('fold');
+  btn.textContent=body.classList.contains('fold')?'展开更多':'收起';
+}
+function addComment(key,i){
+  var input=document.getElementById('cmt-'+key+'-'+i);
+  var x=input.value.trim();
+  if(!x)return;
+  if(!DATA[key][i].comments)DATA[key][i].comments=[];
+  DATA[key][i].comments.push({author:(key==='shen_diary'?'小深':'小迟'),time:nowTime(),text:x});
+  input.value='';
+  saveAll();
+}
+function renderDiary(key,listId,pagerId,badgeId){
+  var arr=DATA[key]||[];
+  document.getElementById(badgeId).textContent=arr.length;
+  var total=Math.ceil(arr.length/PAGE_SIZE);
+  if(page[key]>=total)page[key]=Math.max(0,total-1);
+  var start=page[key]*PAGE_SIZE;
+  var slice=arr.slice(start,start+PAGE_SIZE);
+  var html='';
+  slice.forEach(function(e,idx){
+    var i=start+idx;
+    var folded=e.text.length>140?'fold':'';
+    var comments=(e.comments||[]).map(function(c){
+      return '<div class="cmt"><span class="c-author">'+esc(c.author)+'</span><span class="c-time">'+esc(c.time)+'</span><div class="c-text">'+esc(c.text)+'</div></div>';
+    }).join('');
+    html+='<div class="card diary-card">'+
+      '<div class="diary-date">'+esc(e.date)+' · '+esc(e.time)+'</div>'+
+      '<div class="diary-body '+folded+'">'+esc(e.text)+'</div>'+
+      (e.text.length>140?'<span class="diary-more" onclick="toggleFold(this)">展开更多</span>':'')+
+      '<div class="comments">'+comments+
+        '<div class="cmt-input"><input id="cmt-'+key+'-'+i+'" placeholder="评论…"><button onclick="addComment(\''+key+'\','+i+')">回</button></div>'+
+      '</div>'+
+      '<span class="entry del" style="opacity:.4" onclick="delDiary(\''+key+'\','+i+')">✕</span>'+
+    '</div>';
+  });
+  document.getElementById(listId).innerHTML=html||'<div class="empty">— 暂无 —</div>';
+  // 分页
+  var ph='';
+  for(var p=0;p<total;p++){
+    ph+='<button class="'+(p===page[key]?'cur':'')+'" onclick="page[\''+key+'\']='+p+';renderDiary(\''+key+'\',\''+listId+'\',\''+pagerId+'\',\''+badgeId+'\')">'+(p+1)+'</button>';
+  }
+  document.getElementById(pagerId).innerHTML=total>1?ph:'';
+}
+
+/* ===== 日程（合并到时间轴，保留功能） ===== */
 function addSch(){
   var t=document.getElementById('sch-time').value.trim();
   var x=document.getElementById('sch-text').value.trim();
@@ -345,64 +458,92 @@ function addSch(){
 }
 function delSch(i){DATA.sch.splice(i,1);saveAll();}
 function renderSch(){
+  var arr=(DATA.sch||[]).slice().reverse();
+  document.getElementById('badge-sch').textContent=arr.length;
   var html='';
-  DATA.sch.forEach(function(e,i){
-    html+='<div class="entry"><span><span class="time">'+esc(e.time)+'</span>'+esc(e.text)+'</span><span class="del" onclick="delSch('+i+')">✕</span></div>';
+  arr.forEach(function(e,i){
+    html+='<div class="entry"><span><span class="time">'+esc(e.time)+'</span>'+esc(e.text)+'</span><span class="del" onclick="delSch('+(arr.length-1-i)+')">✕</span></div>';
   });
   document.getElementById('sch-list').innerHTML=html||'<div class="empty">— 暂无 —</div>';
 }
 
+/* ===== 心情 ===== */
 function addMood(){
+  var who=document.getElementById('mood-who').value;
   var t=document.getElementById('mood-time').value.trim();
   var x=document.getElementById('mood-text').value.trim();
-  if(!t||!x)return;
-  DATA.mood.push({time:t,text:x});
+  if(!x)return;
+  var key=who==='shen'?'shen_mood':'mood';
+  DATA[key].push({time:t||nowTime(),text:x,date:todayStr()});
   document.getElementById('mood-time').value='';
   document.getElementById('mood-text').value='';
   saveAll();
 }
-function delMood(i){DATA.mood.splice(i,1);saveAll();}
+function delMood(key,i){DATA[key].splice(i,1);saveAll();}
 function renderMood(){
+  var arr=(DATA.mood||[]).map(function(e){return {who:'小迟',time:e.time,text:e.text,key:'mood'};})
+    .concat((DATA.shen_mood||[]).map(function(e){return {who:'小深',time:e.time,text:e.text,key:'shen_mood'};}));
+  document.getElementById('badge-mood').textContent=arr.length;
+  arr.sort(function(a,b){return String(b.time).localeCompare(String(a.time));});
   var html='';
-  DATA.mood.forEach(function(e,i){
-    html+='<div class="entry"><span><span class="time">'+esc(e.time)+'</span>'+esc(e.text)+'</span><span class="del" onclick="delMood('+i+')">✕</span></div>';
+  arr.forEach(function(e,i){
+    html+='<div class="entry"><span><span class="time">'+esc(e.who)+' '+esc(e.time)+'</span>'+esc(e.text)+'</span><span class="del" onclick="delMood(\''+e.key+'\','+i+')">✕</span></div>';
   });
   document.getElementById('mood-list').innerHTML=html||'<div class="empty">— 暂无 —</div>';
 }
 
+/* ===== 待办 ===== */
 function addTodo(){
+  var who=document.getElementById('todo-who').value;
   var x=document.getElementById('todo-text').value.trim();
   if(!x)return;
-  DATA.todo.push({text:x,done:false});
+  var key=who==='shen'?'shen_todo':'todo';
+  DATA[key].push({text:x,done:false});
   document.getElementById('todo-text').value='';
   saveAll();
 }
-function toggleTodo(i){DATA.todo[i].done=!DATA.todo[i].done;saveAll();}
-function delTodo(i){DATA.todo.splice(i,1);saveAll();}
+function toggleTodo(key,i){DATA[key][i].done=!DATA[key][i].done;saveAll();}
+function delTodo(key,i){DATA[key].splice(i,1);saveAll();}
 function renderTodo(){
+  var arr=(DATA.todo||[]).map(function(e,i){return {who:'小迟',text:e.text,done:e.done,key:'todo',i:i};})
+    .concat((DATA.shen_todo||[]).map(function(e,i){return {who:'小深',text:e.text,done:e.done,key:'shen_todo',i:i};}));
+  document.getElementById('badge-todo').textContent=arr.length;
   var html='';
-  DATA.todo.forEach(function(e,i){
+  arr.forEach(function(e){
     var cls=e.done?'todo done':'todo';
-    html+='<div class="'+cls+'"><input type="checkbox" '+(e.done?'checked':'')+' onchange="toggleTodo('+i+')"><span>'+esc(e.text)+'</span><span class="del" onclick="delTodo('+i+')">✕</span></div>';
+    html+='<div class="'+cls+'"><input type="checkbox" '+(e.done?'checked':'')+' onchange="toggleTodo(\''+e.key+'\','+e.i+')"><span>['+esc(e.who)+'] '+esc(e.text)+'</span><span class="del" onclick="delTodo(\''+e.key+'\','+e.i+')">✕</span></div>';
   });
   document.getElementById('todo-list').innerHTML=html||'<div class="empty">— 暂无 —</div>';
 }
 
-// 加载小深留言
-fetch('https://xc-1590.github.io/xc-notes/xiaoshen/messages.json?t='+Date.now())
+/* ===== 留言板 ===== */
+function loadMsgs(){
+  fetch('https://xc-1590.github.io/xc-notes/xiaoshen/messages.json?t='+Date.now())
   .then(function(r){return r.json();})
   .then(function(data){
     var box=document.getElementById('xiaoshen-msgs');
-    box.innerHTML=data.messages.map(function(m){
+    box.innerHTML=(data.messages||[]).map(function(m){
       return '<div class="xm"><div class="xmt">'+esc(m.time)+'</div><div class="xmb">'+esc(m.text)+'</div></div>';
     }).join('');
   })
   .catch(function(){});
+}
 
-function renderAll(){renderSch();renderMood();renderTodo();}
+function renderAll(){
+  renderSch();
+  renderDiary('shen_diary','shen-diary-list','pager-shen-diary','badge-shen-diary');
+  renderDiary('diary','diary-list','pager-diary','badge-diary');
+  renderMood();
+  renderTodo();
+}
 
 (function init(){
+  var d=new Date();
+  var m=('0'+(d.getMonth()+1)).slice(-2);
+  var day=('0'+d.getDate()).slice(-2);
+  document.getElementById('date-stamp').textContent=d.getFullYear()+'-'+m+'-'+day+' · 星期'+'日一二三四五六'[d.getDay()];
   loadLocal();
+  loadMsgs();
   if(ensureMK()){syncFromCloud();}else{renderAll();}
 })();
 </script>
