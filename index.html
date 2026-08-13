@@ -343,6 +343,7 @@ footer .paw{color:var(--warm);opacity:.6}
           <button onclick="addTodo()">+</button>
         </div>
         <div id="todo-list"></div>
+        <div class="pager" id="pager-todo"></div>
       </div>
     </section>
 
@@ -352,8 +353,10 @@ footer .paw{color:var(--warm);opacity:.6}
         <span class="sec-emoji">✉</span><span class="sec-title" style="color:var(--warm)">小深 → 小迟</span>
         <span class="caret">▾</span>
       </div>
-      <div class="sec-body" id="xiaoshen-msgs"></div>
-      <div class="pager" id="pager-msgs"></div>
+      <div class="sec-body">
+        <div id="xiaoshen-msgs"></div>
+        <div class="pager" id="pager-msgs"></div>
+      </div>
     </section>
 
     <footer>小深 ❄ 小猫 · xc-notes <span class="paw">🐾</span></footer>
@@ -491,13 +494,19 @@ function renderCal(){
 }
 function pickDate(d){
   selectedDate=(selectedDate===d)?null:d;
+  renderDateStamp();
   renderCal();
   renderAll();
 }
 function clearDate(){
   selectedDate=null;
+  renderDateStamp();
   renderCal();
   renderAll();
+}
+function renderDateStamp(){
+  var d=selectedDate?new Date(selectedDate+'T00:00:00'):new Date();
+  document.getElementById('date-stamp').innerHTML='<span class="dot"></span>'+d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+' · 星期'+'日一二三四五六'[d.getDay()]+' <span class="emoji">¯꒳¯</span>';
 }
 
 /* ===== 日记 ===== */
@@ -528,8 +537,8 @@ function addComment(key,i){
   var x=input.value.trim();
   if(!x)return;
   if(!DATA[key][i].comments)DATA[key][i].comments=[];
-  var author=(key==='shen_diary'?'小深':'小迟');
-  DATA[key][i].comments.push({author:author,time:nowTime(),text:x});
+  // 网页端是小迟在操作，评论署名「小迟」；小深从 API 写评论时署名「小深」
+  DATA[key][i].comments.push({author:'小迟',time:nowTime(),text:x});
   input.value='';
   saveAll();
 }
@@ -630,16 +639,26 @@ function addTodo(){
 }
 function toggleTodo(key,i){DATA[key][i].done=!DATA[key][i].done;saveAll();}
 function delTodo(key,i){DATA[key].splice(i,1);saveAll();}
+var todoPage=0,TODO_PAGE_SIZE=8;
 function renderTodo(){
   var arr=(DATA.todo||[]).map(function(e,i){return {who:'小迟',text:e.text,done:e.done,key:'todo',i:i};})
     .concat((DATA.shen_todo||[]).map(function(e,i){return {who:'小深',text:e.text,done:e.done,key:'shen_todo',i:i};}));
   document.getElementById('badge-todo').textContent=arr.length;
+  var total=Math.ceil(arr.length/TODO_PAGE_SIZE);
+  if(todoPage>=total)todoPage=Math.max(0,total-1);
+  var start=todoPage*TODO_PAGE_SIZE;
+  var slice=arr.slice(start,start+TODO_PAGE_SIZE);
   var html='';
-  arr.forEach(function(e){
+  slice.forEach(function(e){
     var cls=e.done?'todo done':'todo';
     html+='<div class="'+cls+'"><input type="checkbox" '+(e.done?'checked':'')+' onchange="toggleTodo(\''+e.key+'\','+e.i+')"><span>['+esc(e.who)+'] '+esc(e.text)+'</span><span class="del" onclick="delTodo(\''+e.key+'\','+e.i+')">✕</span></div>';
   });
   document.getElementById('todo-list').innerHTML=html||'<div class="empty">— 暂无待办 (ᗒᗣᗕ)՞ —</div>';
+  var ph='';
+  for(var p=0;p<total;p++){
+    ph+='<button class="'+(p===todoPage?'cur':'')+'" onclick="todoPage='+p+';renderTodo()">'+(p+1)+'</button>';
+  }
+  document.getElementById('pager-todo').innerHTML=total>1?ph:'';
 }
 
 /* ===== 留言板 ===== */
@@ -648,7 +667,7 @@ function loadMsgs(){
   fetch('https://xc-1590.github.io/xc-notes/xiaoshen/messages.json?t='+Date.now())
   .then(function(r){return r.json();})
   .then(function(data){
-    MSGS=(data.messages||[]).slice().reverse();
+    MSGS=(data.messages||[]).slice(); // 保持时间正序：最早的在顶部
     renderMsgs();
   })
   .catch(function(){});
@@ -678,9 +697,8 @@ function renderAll(){
 }
 
 (function init(){
-  var d=new Date();
-  document.getElementById('date-stamp').innerHTML='<span class="dot"></span>'+d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+' · 星期'+'日一二三四五六'[d.getDay()]+' <span class="emoji">¯꒳¯</span>';
-  calYear=d.getFullYear();calMonth=d.getMonth();
+  calYear=new Date().getFullYear();calMonth=new Date().getMonth();
+  renderDateStamp();
   loadLocal();
   loadMsgs();
   if(ensureMK()){syncFromCloud();}else{renderAll();}
