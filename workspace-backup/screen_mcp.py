@@ -16,6 +16,9 @@ v12 变更（2026-08-16）：
 - locate 结果带 samples/spread/confidence，一眼看出定位稳不稳
 - 返回坐标仍是 width 缩图系坐标：屏幕坐标 = 返回 × (屏幕宽/width)
 
+v12.1 变更（2026-08-16）：
+- 新增 scroll(clicks, x, y)：滚轮。正=上滚，负=下滚；不给坐标就用当前鼠标位置
+
 依赖：pip install "mcp<2" mss pyautogui pillow requests
 运行：python screen_mcp.py   （0.0.0.0:9225，streamable-http）
 """
@@ -223,6 +226,15 @@ def locate_zoom(text: str, model: str = "", zoom: int = 4, width: int = 1600, sa
 
 
 @mcp.tool()
+def scroll(clicks: int, x: int = 0, y: int = 0) -> str:
+    """滚轮：clicks 正=向上滚，负=向下滚（±1≈3行）。x/y 给 0 就用当前鼠标位置。"""
+    if x or y:
+        pyautogui.moveTo(x, y, duration=0.1)
+    pyautogui.scroll(clicks)
+    return f"scrolled {clicks} at ({x},{y})"
+
+
+@mcp.tool()
 def screenshot() -> ImageContent:
     """截取当前屏幕，压缩成 JPEG（宽≤1280）返回图片"""
     jpg = _grab_jpeg(max_width=1280, quality=72)
@@ -279,5 +291,5 @@ def screen_size() -> dict:
 
 
 if __name__ == "__main__":
-    print("screen-mcp v12 启动：http://0.0.0.0:9225/mcp")
+    print("screen-mcp v12.1 启动：http://0.0.0.0:9225/mcp")
     mcp.run(transport="streamable-http")
