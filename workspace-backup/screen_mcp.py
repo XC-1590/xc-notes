@@ -23,6 +23,17 @@ v12.2 变更（2026-08-16）：
 - 模型池重排：GLM-4.5V 第一（实测定位最稳）、Qwen3-VL-30B-A3B 第二（8B 太弱换 MoE 版）、PaddleOCR 第三（复读机垫底）
 - locate_zoom 默认采样 3 次
 
+v12.3 变更（2026-08-16）：
+- 新增 mouse_pos()：读当前鼠标位置（小迟手点目标，我读数校准）
+
+v12.4 变更（2026-08-16）：
+- stdout/stderr 强制 UTF-8，print 全 ASCII（修 latin-1 崩溃）
+
+v12.5 变更（2026-08-16）：
+- 坐标修正因子 LOCATE_KX/KY（鼠标校准实测：模型内部图约 1000×1000 正方形，报的 x 需 ×2.62、y 需 ×1.61 才是屏幕坐标）
+- locate_text 新增 screen_x/screen_y（修正后的屏幕坐标，可直接用）
+- locate_zoom 粗定位按修正因子裁框，精定位按内部图比例换算，返回即屏幕坐标
+
 依赖：pip install "mcp<2" mss pyautogui pillow requests
 运行：python screen_mcp.py   （0.0.0.0:9225，streamable-http）
 """
@@ -57,6 +68,14 @@ LOCATE_MODELS = [
     "Qwen/Qwen3-VL-30B-A3B-Instruct",
     "PaddlePaddle/PaddleOCR-VL-1.5",
 ]
+
+# 坐标修正因子（8.16 鼠标校准实测：小迟手点"缴学宿费的通知"两对数据）
+# 真实/模型：x≈2.62~2.66，y≈1.61。原因：服务端视觉处理把图内部缩成 ~1000×1000 正方形，
+# 模型报的坐标基于内部图而非我们发的 1600 宽图。
+LOCATE_KX = 2.62
+LOCATE_KY = 1.61
+LOCATE_W_INNER = 985   # 模型内部图宽近似（精定位比例换算用）
+LOCATE_H_INNER = 990   # 模型内部图高近似
 
 PROMPT_READ = ("这是一张游戏截图。请识别并输出画面中的所有文字（对话台词、系统文本、选项按钮、人名）。"
                "规则：只输出识别到的文字本身；禁止输出任何思考过程、分析、解释、总结；"
@@ -198,7 +217,10 @@ def locate_text(text: str, model: str = "", width: int = 1600, samples: int = 3)
     if pt is None:
         return json.dumps({"found": False}, ensure_ascii=False)
     conf = round(1.0 - min(1.0, spread / width), 2)
+    # 报的坐标按内部图基准修正成屏幕坐标（LOCATE_KX/KY 实测校准）
     return json.dumps({"found": True, "x": int(pt[0]), "y": int(pt[1]),
+                       "screen_x": int(pt[0] * LOCATE_KX),
+                       "screen_y": int(pt[1] * LOCATE_KY),
                        "samples": n, "spread": int(spread),
                        "confidence": conf}, ensure_ascii=False)
 
@@ -216,9 +238,9 @@ def locate_zoom(text: str, model: str = "", zoom: int = 4, width: int = 1600, sa
         return r
 
     W, H = pyautogui.size()
-    scale = W / width
-    sx = int(obj["x"] * scale)
-    sy = int(obj["y"] * scale)
+    # 粗定位坐标用修正因子转到屏幕系（LOCATE_KX/KY），crop 才能框住目标
+    sx = int(obj.get("screen_x", obj["x"] * LOCATE_KX))
+    sy = int(obj.get("screen_y", obj["y"] * LOCATE_KY))
 
     bw, bh = W // zoom, H // zoom
     left = min(max(0, sx - bw // 2), W - bw)
@@ -230,9 +252,9 @@ def locate_zoom(text: str, model: str = "", zoom: int = 4, width: int = 1600, sa
     if pt is None:
         return json.dumps({"found": False}, ensure_ascii=False)
 
-    resized_h = int(bh * width / bw)
-    fx = left + pt[0] * bw / width
-    fy = top + pt[1] * bh / resized_h
+    # 精定位：模型报局部坐标基于内部图(~985x990)，按比例换算回屏幕
+    fx = left + pt[0] * bw / LOCATE_W_INNER
+    fy = top + pt[1] * bh / LOCATE_H_INNER
     return json.dumps({"found": True, "x": int(fx), "y": int(fy),
                        "zoom": zoom, "spread": int(spread)}, ensure_ascii=False)
 
@@ -310,5 +332,5 @@ def screen_size() -> dict:
 
 
 if __name__ == "__main__":
-    print("screen-mcp v12.4 started: http://0.0.0.0:9225/mcp")
+    print("screen-mcp v12.5 started: http://0.0.0.0:9225/mcp")
     mcp.run(transport="streamable-http")
