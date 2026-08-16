@@ -1,8 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""screen-mcp v4 —— 给小深的手和眼睛（电脑操控 + OCR 读屏）
-
-v4 新增 read_screen()：截屏 → 硅基流动视觉模型 → 返回屏幕文字（剧情/选项）。
+"""screen-mcp v11 —— 给小深的手和眼睛
+v11 变更：
+- read_screen 参数化：model / width / prompt 都能传（换模型换提示词不用改脚本重跑）
+- 默认 prompt 防死循环：只输出屏幕文字，禁止思考/分析/重复
+- 新增 advance()：点击 + 等待 + 读屏，一步到位（推进剧情省一半调用）
+- 新增 locate_text()：问视觉模型目标文字在屏幕上的位置，用于自己点选项
+- 群聊模式：read_screen(prompt="chat")，强化白色昵称识别
 依赖：pip install "mcp<2" mss pyautogui pillow requests
 运行：python screen_mcp.py   （0.0.0.0:9225，streamable-http）
 """
@@ -17,9 +21,15 @@ import pyautogui
 from PIL import Image as PILImage
 
 SF_API   = "https://api.siliconflow.cn/v1/chat/completions"
-SF_KEY   = "sk-xjzedrorlbfedjgzlucglwbvwvfaakdwchubnrnbpcimvlua"
-SF_MODEL = "moonshotai/Kimi-K2.7-Code"
-SF_FALLBACK = "Qwen/Qwen2.5-VL-72B-Instruct"   # Kimi 超时/失败时自动回退
+SF_KEY   = "你的硅基流动KEY粘贴在这里"
+SF_MODEL = "zai-org/GLM-4.5V"
+
+PROMPT_READ = ("这是一张游戏截图。请识别并输出画面中的所有文字（对话台词、系统文本、选项按钮、人名）。"
+               "规则：只输出识别到的文字本身；禁止输出任何思考过程、分析、解释、总结；"
+               "每段文字只输出一次，禁止重复；看不清的位置跳过；如果画面没有任何文字，只回复一个词：无。")
+
+PROMPT_CHAT = ("这是一张聊天界面截图。请识别聊天记录，按时间顺序逐条输出，格式为【昵称】内容。"
+               "特别注意白色或浅色的昵称文字。只输出识别结果，禁止思考过程和重复。")
 
 mcp = FastMCP("screen-mcp", host="0.0.0.0", port=9225)
 pyautogui.PAUSE = 0.3
@@ -40,37 +50,65 @@ def _grab_jpeg(max_width=1600, quality=85):
         return buf.getvalue()
 
 
-@mcp.tool()
-def read_screen() -> str:
-    """截屏并 OCR：返回屏幕上的全部文字（剧情、对话框、选项）"""
-    jpg = _grab_jpeg(max_width=1280, quality=75)
+def _ask(model, prompt, max_width=1280, quality=80, max_tokens=4096, timeout=150):
+    jpg = _grab_jpeg(max_width=max_width, quality=quality)
     b64 = base64.b64encode(jpg).decode()
-    prompt = "这是一张游戏截图。逐字识别画面中的所有文字：对话框台词、剧情文本、选项按钮、按钮标签。按从上到下从左到右的顺序输出，不要遗漏，不要总结，只输出文字内容。"
-    for model in (SF_MODEL, SF_FALLBACK):
-        try:
-            resp = requests.post(SF_API, headers={
-                "Authorization": f"Bearer {SF_KEY}",
-                "Content-Type": "application/json"
-            }, json={
-                "model": model,
-                "messages": [{
-                    "role": "user",
-                    "content": [
-                        {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{b64}"}},
-                        {"type": "text", "text": prompt}
-                    ]
-                }],
-                "temperature": 0.1,
-                "max_tokens": 4096
-            }, timeout=120)
-            data = resp.json()
-            if "choices" in data:
-                return f"[{model}]\n" + data["choices"][0]["message"]["content"]
-            return f"OCR失败 {resp.status_code}: {str(data)[:300]}"
-        except Exception as e:
-            if model == SF_FALLBACK:
-                return f"两个模型都失败: {type(e).__name__} {e}"
-            continue
+    resp = requests.post(SF_API, headers={
+        "Authorization": f"Bearer {SF_KEY}",
+        "Content-Type": "application/json"
+    }, json={
+        "model": model,
+        "messages": [{
+            "role": "user",
+            "content": [
+                {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{b64}"}},
+                {"type": "text", "text": prompt}
+            ]
+        }],
+        "temperature": 0.1,
+        "max_tokens": max_tokens
+    }, timeout=timeout)
+    data = resp.json()
+    if "choices" in data:
+        return data["choices"][0]["message"]["content"]
+    return f"OCR失败 {resp.status_code}: {str(data)[:200]}"
+
+
+@mcp.tool()
+def read_screen(model: str = "", width: int = 960, prompt: str = "") -> str:
+    """截屏 OCR。model 空=默认 GLM-4.5V；prompt 空=通用读屏；prompt=\"chat\"=群聊模式（强化白色昵称）。"""
+    m = model or SF_MODEL
+    if prompt == "chat":
+        p = PROMPT_CHAT
+    elif prompt:
+        p = prompt
+    else:
+        p = PROMPT_READ
+    try:
+        return f"[{m}]\n" + _ask(m, p, max_width=width, quality=80)
+    except Exception as e:
+        return f"失败: {type(e).__name__} {e}"
+
+
+@mcp.tool()
+def advance(x: int = 1280, y: int = 800, model: str = "", width: int = 960, prompt: str = "") -> str:
+    """游戏推进：点(x,y) → 等0.5s → 读屏，返回最新屏幕文字。"""
+    pyautogui.click(x, y)
+    time.sleep(0.5)
+    return read_screen(model=model, width=width, prompt=prompt)
+
+
+@mcp.tool()
+def locate_text(text: str, model: str = "", width: int = 1600) -> str:
+    """找目标文字在屏幕上的位置，返回中心坐标 JSON，用于点击选项。"""
+    m = model or SF_MODEL
+    p = (f"这是屏幕截图。请在画面中找到文字“{text}”。"
+         "如果找到，只回复一个 JSON：{\"found\":true,\"x\":中心x坐标,\"y\":中心y坐标}；"
+         "如果找不到，只回复 {\"found\":false}。禁止其他任何内容。")
+    try:
+        return _ask(m, p, max_width=width, quality=85, max_tokens=256)
+    except Exception as e:
+        return f"失败: {type(e).__name__} {e}"
 
 
 @mcp.tool()
@@ -130,5 +168,5 @@ def screen_size() -> dict:
 
 
 if __name__ == "__main__":
-    print("screen-mcp v4 启动：http://0.0.0.0:9225/mcp")
+    print("screen-mcp v11 启动：http://0.0.0.0:9225/mcp")
     mcp.run(transport="streamable-http")
