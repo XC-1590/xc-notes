@@ -19,26 +19,34 @@
 <body>
 <h1>五子棋 · 小深 vs 小迟</h1>
 <div id="bar">第 1 手 · 轮到 <span class="black">黑棋</span>（小迟）</div>
-<canvas id="board" width="750" height="750"></canvas>
+<canvas id="board" width="800" height="800"></canvas>
 <div id="btns">
   <button onclick="newGame()">新一局</button>
   <button onclick="undo()">悔棋</button>
 </div>
 <div id="info">黑:小迟(先手) | 白:小深 | 三局两胜 · 比分 0:0</div>
 <script>
-const N=15, MARGIN=25, CELL=50, R=22;
+const N=15, MARGIN=50, CELL=50, R=22;
 const cv=document.getElementById('board'), ctx=cv.getContext('2d');
 let board=Array.from({length:N},()=>Array(N).fill(0)); // 0空 1黑 2白
 let turn=1, over=false, moves=[], score={black:0,white:0}, games=0;
 const COLS='ABCDEFGHIJKLMNO';
 
 function draw(){
-  ctx.fillStyle='#e8c170'; ctx.fillRect(0,0,750,750);
+  ctx.fillStyle='#e8c170'; ctx.fillRect(0,0,800,800);
   ctx.strokeStyle='#5a3e1b'; ctx.lineWidth=1;
   for(let i=0;i<N;i++){
     const p=MARGIN+i*CELL;
     ctx.beginPath(); ctx.moveTo(MARGIN,p); ctx.lineTo(MARGIN+(N-1)*CELL,p); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(p,MARGIN); ctx.lineTo(p,MARGIN+(N-1)*CELL); ctx.stroke();
+  }
+  // 坐标标注：顶部列 A-O，左侧行 1-15
+  ctx.fillStyle='#4a2f10'; ctx.font='bold 18px monospace'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  for(let i=0;i<N;i++){
+    ctx.fillText(COLS[i], MARGIN+i*CELL, 18);
+    ctx.fillText(COLS[i], MARGIN+i*CELL, 800-18);
+    ctx.fillText(String(i+1), 20, MARGIN+i*CELL);
+    ctx.fillText(String(i+1), 800-20, MARGIN+i*CELL);
   }
   // 星位
   [[3,3],[3,11],[11,3],[11,11],[7,7]].forEach(([a,b])=>{
@@ -87,7 +95,7 @@ function win(x,y,c){
 }
 cv.addEventListener('click',e=>{
   const r=cv.getBoundingClientRect();
-  const x=(e.clientX-r.left)*(750/r.width), y=(e.clientY-r.top)*(750/r.height);
+  const x=(e.clientX-r.left)*(800/r.width), y=(e.clientY-r.top)*(800/r.height);
   const i=Math.round((x-MARGIN)/CELL), j=Math.round((y-MARGIN)/CELL);
   if(i<0||i>=N||j<0||j>=N) return;
   if(Math.abs(x-(MARGIN+i*CELL))>CELL*0.42||Math.abs(y-(MARGIN+j*CELL))>CELL*0.42) return;
