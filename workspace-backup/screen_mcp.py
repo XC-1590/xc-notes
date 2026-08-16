@@ -19,6 +19,10 @@ v12 变更（2026-08-16）：
 v12.1 变更（2026-08-16）：
 - 新增 scroll(clicks, x, y)：滚轮。正=上滚，负=下滚；不给坐标就用当前鼠标位置
 
+v12.2 变更（2026-08-16）：
+- 模型池重排：GLM-4.5V 第一（实测定位最稳）、Qwen3-VL-30B-A3B 第二（8B 太弱换 MoE 版）、PaddleOCR 第三（复读机垫底）
+- locate_zoom 默认采样 3 次
+
 依赖：pip install "mcp<2" mss pyautogui pillow requests
 运行：python screen_mcp.py   （0.0.0.0:9225，streamable-http）
 """
@@ -40,10 +44,11 @@ SF_KEY = "你的硅基流动KEY粘贴在这里"
 SF_MODEL = "zai-org/GLM-4.5V"
 
 # 定位模型池：locate_text / locate_zoom 按序轮询；单个模型报错自动跳过
+# 排序经验（8.16 实测）：GLM-4.5V 定位最稳；Qwen3-VL-8B 读屏瞎（回"无"）；PaddleOCR 复读机（刷烂JSON）
 LOCATE_MODELS = [
-    "Qwen/Qwen3-VL-8B-Instruct",
-    "PaddlePaddle/PaddleOCR-VL-1.5",
     "zai-org/GLM-4.5V",
+    "Qwen/Qwen3-VL-30B-A3B-Instruct",
+    "PaddlePaddle/PaddleOCR-VL-1.5",
 ]
 
 PROMPT_READ = ("这是一张游戏截图。请识别并输出画面中的所有文字（对话台词、系统文本、选项按钮、人名）。"
@@ -192,7 +197,7 @@ def locate_text(text: str, model: str = "", width: int = 1600, samples: int = 3)
 
 
 @mcp.tool()
-def locate_zoom(text: str, model: str = "", zoom: int = 4, width: int = 1600, samples: int = 2) -> str:
+def locate_zoom(text: str, model: str = "", zoom: int = 4, width: int = 1600, samples: int = 3) -> str:
     """粗定位→裁剪放大→精定位，返回屏幕坐标（可直接喂 click）。
     zoom=放大倍数：越大裁剪区域越小、目标在图中占比越大（小字建议 6~8）。"""
     r = locate_text(text=text, model=model, width=width, samples=samples)
@@ -214,7 +219,7 @@ def locate_zoom(text: str, model: str = "", zoom: int = 4, width: int = 1600, sa
     crop = _grab_raw().crop((left, top, left + bw, top + bh))
     jpg = _pil_to_jpeg(crop, max_width=width, quality=90)
 
-    pt, spread, _ = _locate_multi(text, jpg, width, max(samples, 2), model)
+    pt, spread, _ = _locate_multi(text, jpg, width, max(samples, 1), model)
     if pt is None:
         return json.dumps({"found": False}, ensure_ascii=False)
 
@@ -291,5 +296,5 @@ def screen_size() -> dict:
 
 
 if __name__ == "__main__":
-    print("screen-mcp v12.1 启动：http://0.0.0.0:9225/mcp")
+    print("screen-mcp v12.2 启动：http://0.0.0.0:9225/mcp")
     mcp.run(transport="streamable-http")
