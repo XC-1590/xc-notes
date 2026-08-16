@@ -231,6 +231,13 @@ def locate_zoom(text: str, model: str = "", zoom: int = 4, width: int = 1600, sa
 
 
 @mcp.tool()
+def mouse_pos() -> dict:
+    """读当前鼠标位置。小迟手动把鼠标放到目标上，我读坐标校准定位。"""
+    x, y = pyautogui.position()
+    return {"x": x, "y": y}
+
+
+@mcp.tool()
 def scroll(clicks: int, x: int = 0, y: int = 0) -> str:
     """滚轮：clicks 正=向上滚，负=向下滚（±1≈3行）。x/y 给 0 就用当前鼠标位置。"""
     if x or y:
@@ -296,5 +303,5 @@ def screen_size() -> dict:
 
 
 if __name__ == "__main__":
-    print("screen-mcp v12.2 启动：http://0.0.0.0:9225/mcp")
+    print("screen-mcp v12.3 启动：http://0.0.0.0:9225/mcp")
     mcp.run(transport="streamable-http")
