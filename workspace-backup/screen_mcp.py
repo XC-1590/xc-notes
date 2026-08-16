@@ -30,7 +30,14 @@ import base64
 import io
 import json
 import re
+import sys
 import time
+
+try:
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+except Exception:
+    pass
 
 import mss
 import pyautogui
@@ -303,5 +310,5 @@ def screen_size() -> dict:
 
 
 if __name__ == "__main__":
-    print("screen-mcp v12.3 启动：http://0.0.0.0:9225/mcp")
+    print("screen-mcp v12.4 started: http://0.0.0.0:9225/mcp")
     mcp.run(transport="streamable-http")
