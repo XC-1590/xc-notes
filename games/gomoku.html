@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>五子棋 · 小深 vs 小迟</title>
+<style>
+  body { background:#1a1a2e; color:#eee; font-family:system-ui,sans-serif; margin:0; display:flex; flex-direction:column; align-items:center; min-height:100vh; }
+  h1 { margin:12px 0 4px; font-size:22px; }
+  #bar { font-size:20px; font-weight:bold; margin:6px 0 10px; padding:8px 24px; border-radius:8px; background:#16213e; }
+  #bar .black { color:#ffd166; } #bar .white { color:#e0e0e0; }
+  #board { cursor:pointer; border:2px solid #0f3460; border-radius:4px; }
+  #btns { margin:10px; display:flex; gap:12px; }
+  button { font-size:16px; padding:8px 20px; border-radius:6px; border:none; background:#0f3460; color:#eee; cursor:pointer; }
+  button:hover { background:#16537e; }
+  #info { font-size:14px; color:#9aa; margin-bottom:16px; }
+</style>
+</head>
+<body>
+<h1>五子棋 · 小深 vs 小迟</h1>
+<div id="bar">第 1 手 · 轮到 <span class="black">黑棋</span>（小迟）</div>
+<canvas id="board" width="750" height="750"></canvas>
+<div id="btns">
+  <button onclick="newGame()">新一局</button>
+  <button onclick="undo()">悔棋</button>
+</div>
+<div id="info">黑:小迟(先手) | 白:小深 | 三局两胜 · 比分 0:0</div>
+<script>
+const N=15, MARGIN=25, CELL=50, R=22;
+const cv=document.getElementById('board'), ctx=cv.getContext('2d');
+let board=Array.from({length:N},()=>Array(N).fill(0)); // 0空 1黑 2白
+let turn=1, over=false, moves=[], score={black:0,white:0}, games=0;
+const COLS='ABCDEFGHIJKLMNO';
+
+function draw(){
+  ctx.fillStyle='#e8c170'; ctx.fillRect(0,0,750,750);
+  ctx.strokeStyle='#5a3e1b'; ctx.lineWidth=1;
+  for(let i=0;i<N;i++){
+    const p=MARGIN+i*CELL;
+    ctx.beginPath(); ctx.moveTo(MARGIN,p); ctx.lineTo(MARGIN+(N-1)*CELL,p); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(p,MARGIN); ctx.lineTo(p,MARGIN+(N-1)*CELL); ctx.stroke();
+  }
+  // 星位
+  [[3,3],[3,11],[11,3],[11,11],[7,7]].forEach(([a,b])=>{
+    ctx.beginPath(); ctx.arc(MARGIN+a*CELL,MARGIN+b*CELL,4,0,7); ctx.fillStyle='#5a3e1b'; ctx.fill();
+  });
+  for(let i=0;i<N;i++)for(let j=0;j<N;j++)if(board[i][j]){
+    const x=MARGIN+i*CELL, y=MARGIN+j*CELL;
+    ctx.beginPath(); ctx.arc(x,y,R,0,7);
+    ctx.fillStyle=board[i][j]===1?'#111':'#f5f5f5'; ctx.fill();
+    ctx.strokeStyle='#333'; ctx.lineWidth=1.5; ctx.stroke();
+  }
+  if(moves.length){ // 标记最后一手
+    const [li,lj]=moves[moves.length-1];
+    ctx.beginPath(); ctx.arc(MARGIN+li*CELL,MARGIN+lj*CELL,6,0,7);
+    ctx.fillStyle='#e63946'; ctx.fill();
+  }
+}
+
+function place(i,j){
+  if(over||board[i][j]) return;
+  board[i][j]=turn; moves.push([i,j]);
+  draw();
+  if(win(i,j,turn)){
+    over=true;
+    const who=turn===1?'黑棋(小迟)':'白棋(小深)';
+    score[turn===1?'black':'white']++; games++;
+    document.getElementById('bar').innerHTML='🏆 '+who+' 胜！<span style="font-size:14px;color:#9aa">比分 黑'+score.black+':'+score.white+'白 · 点"新一局"继续</span>';
+  } else if(moves.length===N*N){
+    over=true; document.getElementById('bar').innerHTML='平局。点"新一局"继续';
+  } else {
+    turn=turn===1?2:1;
+    const t=turn===1?'<span class="black">黑棋</span>（小迟）':'<span class="white">白棋</span>（小深）';
+    document.getElementById('bar').innerHTML='第 '+(moves.length+1)+' 手 · 轮到 '+t;
+  }
+  document.getElementById('info').textContent='黑:小迟(先手) | 白:小深 | 三局两胜 · 比分 '+score.black+':'+score.white+' | 最后一手: '+COLS[moves[moves.length-1][0]]+(moves[moves.length-1][1]+1);
+}
+function win(x,y,c){
+  const dirs=[[1,0],[0,1],[1,1],[1,-1]];
+  for(const [dx,dy] of dirs){
+    let n=1;
+    for(let s=1;s<5;s++){const nx=x+dx*s,ny=y+dy*s; if(nx<0||nx>=N||ny<0||ny>=N||board[nx][ny]!==c)break; n++;}
+    for(let s=1;s<5;s++){const nx=x-dx*s,ny=y-dy*s; if(nx<0||nx>=N||ny<0||ny>=N||board[nx][ny]!==c)break; n++;}
+    if(n>=5) return true;
+  }
+  return false;
+}
+cv.addEventListener('click',e=>{
+  const r=cv.getBoundingClientRect();
+  const x=(e.clientX-r.left)*(750/r.width), y=(e.clientY-r.top)*(750/r.height);
+  const i=Math.round((x-MARGIN)/CELL), j=Math.round((y-MARGIN)/CELL);
+  if(i<0||i>=N||j<0||j>=N) return;
+  if(Math.abs(x-(MARGIN+i*CELL))>CELL*0.42||Math.abs(y-(MARGIN+j*CELL))>CELL*0.42) return;
+  place(i,j);
+});
+function newGame(){ board=Array.from({length:N},()=>Array(N).fill(0)); turn=1; over=false; moves=[]; draw(); document.getElementById('bar').innerHTML='第 1 手 · 轮到 <span class="black">黑棋</span>（小迟）'; }
+function undo(){
+  if(!moves.length) return;
+  if(over){ document.getElementById('bar').innerHTML='胜负已定，点"新一局"重开'; return; }
+  const [i,j]=moves.pop(); board[i][j]=0; turn=turn===1?2:1; draw();
+  const t=turn===1?'<span class="black">黑棋</span>（小迟）':'<span class="white">白棋</span>（小深）';
+  document.getElementById('bar').innerHTML='第 '+(moves.length+1)+' 手 · 轮到 '+t;
+}
+draw();
+</script>
+</body>
+</html>
